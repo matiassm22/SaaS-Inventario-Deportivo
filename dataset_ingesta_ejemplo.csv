@@ -1,0 +1,9 @@
+sku_codigo,nombre,disciplina,talla,sucursal_codigo,fecha,unidades_vendidas,stock_actual,stock_minimo,precio_unitario
+RUN-001,Nike Vaporfly 3,RUNNING,Talla 42,SUC-01,2026-11-22,5,3,8,219990
+RUN-008,Cortaviento Trail Shield,RUNNING,Talla M,SUC-01,2026-11-22,3,6,12,69990
+FUT-023,Balón Torneo Pro Match N°5,FUTBOL,Estándar,SUC-02,2026-11-22,8,12,18,39990
+FIT-012,Polera Compresión Dry-Fit,FITNESS,Talla L,SUC-03,2026-11-22,4,18,20,29990
+FUT-104,Camiseta Local Oficial 2026,FUTBOL,Talla M,SUC-02,2026-11-22,10,45,20,74990
+RUN-002,Adidas Adizero Adios Pro,RUNNING,Talla 43,SUC-01,2026-11-22,4,4,10,199990
+FIT-005,Mancuerna Hexagonal 10kg,FITNESS,10kg,SUC-03,2026-11-22,2,15,8,34990
+FUT-011,Canilleras Pro Carbon,FUTBOL,Talla M,SUC-02,2026-11-22,6,9,15,19990
