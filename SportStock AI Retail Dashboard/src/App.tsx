@@ -357,7 +357,7 @@ function StoreApp() {
               <div><span className="status-dot amber" /><b>7</b><small>Preventivos</small></div>
               <div><span className="status-dot green" /><b>142</b><small>Óptimos</small></div>
             </div>
-            <div className="search-box"><Icon name="search" size={18} /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar SKU o producto" /><button onClick={() => setScan(true)}><Icon name="barcode" size={20} /></button></div>
+            <div className="search-box"><Icon name="search" size={18} /><input value={query} onChange={(e: any) => setQuery(e.target.value)} placeholder="Buscar SKU o producto" /><button onClick={() => setScan(true)}><Icon name="barcode" size={20} /></button></div>
             <div className="flex items-end justify-between mt-6 mb-3"><div><p className="text-[15px] text-white font-semibold">Prioridad para hoy</p><p className="text-[11px] text-slate-500 mt-0.5">{filtered.length} tareas ordenadas por urgencia</p></div><button className="text-[11px] text-emerald-400 font-medium">Ver todas</button></div>
             <div className="space-y-3">
               {filtered.map(item => {
@@ -401,10 +401,10 @@ const auditRows: AuditRow[] = [
 ]
 
 function Integration() {
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLInputElement | null>(null)
   const [upload, setUpload] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
-  const [rows, setRows] = useState(auditRows)
+  const [rows, setRows] = useState<AuditRow[]>(auditRows)
 
   useEffect(() => {
     let mounted = true
@@ -450,10 +450,10 @@ function Integration() {
         </div>
         <div className="panel p-5 lg:p-6 min-h-[270px]">
           <div className="flex items-center justify-between"><div><h2 className="section-title">Carga manual de planillas</h2><p className="section-subtitle mt-1.5">CSV o Excel · hasta 25 MB</p></div><div className="integration-icon"><Icon name="file" /></div></div>
-          <button onClick={() => inputRef.current?.click()} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFileUpload(f); }} className={`drop-zone ${upload ? 'uploaded' : ''}`}>
+          <button onClick={() => inputRef.current?.click()} onDragOver={(e: any) => e.preventDefault()} onDrop={(e: any) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFileUpload(f); }} className={`drop-zone ${upload ? 'uploaded' : ''}`}>
             {upload ? <><span className="upload-check"><Icon name="check" /></span><div><p>{upload}</p><small>Archivo validado en servidor · Haz clic para reemplazar</small></div></> : <><span className="upload-icon"><Icon name="cloud" size={22} /></span><div><p>Arrastra aquí tu reporte de stock (.csv)</p><small>o haz clic para explorar archivos</small></div></>}
           </button>
-          <input ref={inputRef} type="file" accept=".csv,.xlsx" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); }} />
+          <input ref={inputRef} type="file" accept=".csv,.xlsx" className="hidden" onChange={(e: any) => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); }} />
         </div>
       </div>
       <div className="panel mt-4 overflow-hidden">

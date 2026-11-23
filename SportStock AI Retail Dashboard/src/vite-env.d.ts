@@ -1,20 +1,26 @@
 /// <reference types="vite/client" />
 
-declare namespace JSX {
-  interface IntrinsicElements {
-    [elem: string]: any;
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      [elem: string]: any;
+    }
+    interface Element extends any {}
   }
-  interface Element extends any {}
 }
 
 declare module 'react' {
   export type ReactNode = any;
+  export type ReactElement = any;
   export type FC<P = {}> = (props: P) => any;
-  export function useState<T>(initialState: T | (() => T)): [T, (val: T | ((prev: T) => T)) => void];
-  export function useEffect(effect: () => void | (() => void), deps?: readonly any[]): void;
-  export function useMemo<T>(factory: () => T, deps: readonly any[] | undefined): T;
-  export function useRef<T>(initialValue: T): { current: T };
-  export function useRef<T = unknown>(): { current: T | undefined };
+  export type SetStateAction<S> = S | ((prevState: S) => S);
+  export type Dispatch<A> = (value: A) => void;
+  export function useState<S>(initialState: S | (() => S)): [S, Dispatch<SetStateAction<S>>];
+  export function useState<S = undefined>(): [S | undefined, Dispatch<SetStateAction<S | undefined>>];
+  export function useEffect(effect: () => void | (() => void), deps?: any[]): void;
+  export function useMemo<T>(factory: () => T, deps: any[] | undefined): T;
+  export function useRef<T>(initialValue: T | null): { current: T | null };
+  export function useRef<T = undefined>(): { current: T | undefined };
   export const StrictMode: any;
   const React: any;
   export default React;
