@@ -39,7 +39,7 @@ export class IngestionService {
       } else {
         errors.push({
           row: i + 1,
-          error: parsed.error.issues.map((iss) => `${iss.path.join('.')}: ${iss.message}`).join(', '),
+          error: parsed.error.issues.map((iss: any) => `${iss.path.join('.')}: ${iss.message}`).join(', '),
         });
       }
     }
@@ -71,7 +71,7 @@ export class IngestionService {
       } else {
         errors.push({
           row: idx + 1,
-          error: parsed.error.issues.map((iss) => `${iss.path.join('.')}: ${iss.message}`).join(', '),
+          error: parsed.error.issues.map((iss: any) => `${iss.path.join('.')}: ${iss.message}`).join(', '),
         });
       }
     });

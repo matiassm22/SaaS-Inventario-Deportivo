@@ -162,6 +162,18 @@ function KpiCard({ item }: { item: KpiItem }) {
   )
 }
 
+const chartLabels = [
+  { x: 48, val: '372' },
+  { x: 135, val: '418' },
+  { x: 225, val: '464' },
+  { x: 315, val: '510' },
+  { x: 400, val: '556' },
+  { x: 490, val: '602' },
+  { x: 580, val: '648' },
+]
+
+const chartYAxis = ['800', '1.2k', '1.6k', '2.0k', '2.4k']
+
 function ForecastChart() {
   const [discipline, setDiscipline] = useState('Todas')
   return (
@@ -177,7 +189,7 @@ function ForecastChart() {
       <div className="mt-4 h-[245px] relative">
         <svg viewBox="0 0 690 260" preserveAspectRatio="none" className="w-full h-full overflow-visible">
           <defs>
-            <linearGradient id="forecast" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#10b981" stopOpacity=".22" /><stop offset="1" stopColor="#10b981" stopOpacity="0" /></linearGradient>
+            <linearGradient id="forecast" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#10b981" stopOpacity="0.22" /><stop offset="1" stopColor="#10b981" stopOpacity="0" /></linearGradient>
           </defs>
           {[25, 80, 135, 190, 245].map(y => <line key={y} x1="45" y1={y} x2="680" y2={y} stroke="#1f2937" strokeWidth="1" />)}
           <line x1="350" y1="15" x2="350" y2="245" stroke="#334155" strokeDasharray="3 5" />
@@ -185,8 +197,8 @@ function ForecastChart() {
           <path d="M350 140 C390 119,410 128,440 96 S500 78,530 88 S580 50,620 61 S655 34,680 42 L680 245 L350 245Z" fill="url(#forecast)" />
           <path d="M48 190 C80 177,105 182,135 157 S190 169,225 130 S280 143,315 117 S338 130,350 140" fill="none" stroke="#94a3b8" strokeWidth="2.5" />
           <path d="M350 140 C390 119,410 128,440 96 S500 78,530 88 S580 50,620 61 S655 34,680 42" fill="none" stroke="#10b981" strokeWidth="3" strokeDasharray="8 7" />
-          {[['48','372'],['135','418'],['225','464'],['315','510'],['400','556'],['490','602'],['580','648']].map(([x, val]) => <text key={x} x={x} y="258" fill="#64748b" fontSize="10">{val}</text>)}
-          {['800', '1.2k', '1.6k', '2.0k', '2.4k'].map((v, i) => <text key={v} x="3" y={249 - i * 55} fill="#64748b" fontSize="10">{v}</text>)}
+          {chartLabels.map(item => <text key={item.x} x={item.x} y="258" fill="#64748b" fontSize="10">{item.val}</text>)}
+          {chartYAxis.map((v, i) => <text key={v} x="3" y={249 - i * 55} fill="#64748b" fontSize="10">{v}</text>)}
           <circle cx="680" cy="42" r="5" fill="#0b0f19" stroke="#10b981" strokeWidth="3" />
         </svg>
         <div className="chart-tooltip"><span>Pronóstico sem. 6</span><strong>2.328 u.</strong><small>94% fiabilidad</small></div>
@@ -205,6 +217,10 @@ interface UrgentItem {
   level: 'critical' | 'warning'
 }
 
+interface ReplenishmentItem extends UrgentItem {
+  formula: string
+}
+
 const urgent: UrgentItem[] = [
   { sku: 'RUN-001', name: 'Nike Vaporfly 3', detail: 'Talla 42 · Costanera Center', qty: '+25 u.', chip: '+35% Maratón Stgo.', confidence: 94, level: 'critical' },
   { sku: 'RUN-008', name: 'Cortaviento Trail Shield', detail: 'Costanera Center', qty: '+18 u.', chip: 'Pico estacional', confidence: 91, level: 'critical' },
@@ -214,7 +230,7 @@ const urgent: UrgentItem[] = [
 function ReplenishmentList({ liveOrders }: { liveOrders?: DashboardResponse['sugerencias_urgentes'] }) {
   const [approved, setApproved] = useState<string[]>([])
 
-  const items = useMemo(() => {
+  const items: ReplenishmentItem[] = useMemo(() => {
     if (liveOrders && liveOrders.length > 0) {
       return liveOrders.map((o) => ({
         sku: o.sku_codigo,
@@ -223,7 +239,7 @@ function ReplenishmentList({ liveOrders }: { liveOrders?: DashboardResponse['sug
         qty: `+${o.cantidad_sugerida} u.`,
         chip: o.evento_estacional,
         confidence: o.confidence_score,
-        level: o.formula_desglose.stock_actual <= 3 ? 'critical' : 'warning',
+        level: (o.formula_desglose.stock_actual <= 3 ? 'critical' : 'warning') as 'critical' | 'warning',
         formula: `Demanda esperada (${o.formula_desglose.demanda_esperada}) + Seguridad (${o.formula_desglose.stock_seguridad}) − Stock actual (${o.formula_desglose.stock_actual}) = ${o.cantidad_sugerida} unidades`,
       }))
     }
@@ -234,8 +250,7 @@ function ReplenishmentList({ liveOrders }: { liveOrders?: DashboardResponse['sug
   }, [liveOrders])
 
   const handleApprove = async (sku: string) => {
-    setApproved((prev) => [...prev, sku])
-    // Llamada reactiva a la API REST (persistencia en DB)
+    setApproved((prev: string[]) => [...prev, sku])
     await api.approveOrder(sku)
   }
 
@@ -287,7 +302,7 @@ function Dashboard() {
     }
   }, [])
 
-  const currentKpis = useMemo(() => {
+  const currentKpis: KpiItem[] = useMemo(() => {
     if (!data) return kpis
     return [
       { title: 'SKUs en quiebre crítico', value: String(data.kpis.skus_quiebre_critico), meta: '+3', detail: 'vs. semana anterior', tone: 'red', spark: '5,24 18,22 31,23 44,15 58,17 72,8 87,10 100,4' },
@@ -330,6 +345,12 @@ const storeAlerts: StoreAlert[] = [
   { level: 'warning', title: 'Balón Torneo Pro Match N°5', variant: 'Fútbol', stock: 12, min: 18, eta: 'Lunes 30', sku: 'FUT-023' },
 ]
 
+const storeFeatures: Array<{ icon: IconName; title: string; copy: string }> = [
+  { icon: 'barcode', title: 'Escaneo instantáneo', copy: 'Encuentra cualquier SKU sin digitar códigos.' },
+  { icon: 'alert', title: 'Alertas con contexto', copy: 'Stock, mínimo y fecha de reposición en una vista.' },
+  { icon: 'check', title: 'Cierre operativo', copy: 'Cada conteo queda confirmado para todo el equipo.' },
+]
+
 function StoreApp() {
   const [counted, setCounted] = useState<string[]>([])
   const [query, setQuery] = useState('')
@@ -337,7 +358,7 @@ function StoreApp() {
   const filtered = storeAlerts.filter(x => x.title.toLowerCase().includes(query.toLowerCase()))
 
   const handleConfirmCount = async (sku: string) => {
-    setCounted((prev) => [...prev, sku])
+    setCounted((prev: string[]) => [...prev, sku])
     await api.recordStoreSale(sku, 0)
   }
   return (
@@ -377,7 +398,7 @@ function StoreApp() {
         </div>
         <div className="hidden lg:block max-w-[370px]">
           <span className="eyebrow text-emerald-400">Diseñado para el piso</span><h2 className="text-3xl font-semibold tracking-[-.04em] text-white mt-4 leading-tight">Menos menús.<br />Más acciones resueltas.</h2><p className="text-sm text-slate-400 leading-6 mt-5">La app ordena las tareas por impacto, confirma stock físico y mantiene al equipo alineado con el pronóstico central.</p>
-          <div className="mt-8 space-y-5">{[['barcode','Escaneo instantáneo','Encuentra cualquier SKU sin digitar códigos.'],['alert','Alertas con contexto','Stock, mínimo y fecha de reposición en una vista.'],['check','Cierre operativo','Cada conteo queda confirmado para todo el equipo.']].map(([icon,title,copy]) => <div key={title} className="flex gap-4"><div className="feature-icon"><Icon name={icon as IconName} /></div><div><p className="text-sm font-medium text-slate-100">{title}</p><p className="text-xs text-slate-500 mt-1 leading-5">{copy}</p></div></div>)}</div>
+          <div className="mt-8 space-y-5">{storeFeatures.map(f => <div key={f.title} className="flex gap-4"><div className="feature-icon"><Icon name={f.icon} /></div><div><p className="text-sm font-medium text-slate-100">{f.title}</p><p className="text-xs text-slate-500 mt-1 leading-5">{f.copy}</p></div></div>)}</div>
         </div>
       </div>
     </main>
@@ -398,6 +419,12 @@ const auditRows: AuditRow[] = [
   { id: 'LT-2025-0622-03', date: '22 Jun, 18:12', source: 'stock_semanal.xlsx', records: '4.862', status: 'Validado con alertas', tone: 'warning' },
   { id: 'LT-2025-0622-02', date: '22 Jun, 08:30', source: 'SAP Business One', records: '12.391', status: 'Validado', tone: 'success' },
   { id: 'LT-2025-0621-01', date: '21 Jun, 08:30', source: 'SAP Business One', records: '12.404', status: 'Validado', tone: 'success' },
+]
+
+const dataStats: Array<{ icon: IconName; value: string; label: string }> = [
+  { icon: 'database', value: '12.458', label: 'Registros sincronizados' },
+  { icon: 'check', value: '99,8%', label: 'Calidad de datos' },
+  { icon: 'activity', value: '4m 12s', label: 'Tiempo de procesamiento' },
 ]
 
 function Integration() {
@@ -422,7 +449,7 @@ function Integration() {
     setUpload(file.name)
     const res = await api.uploadCsvBatch(file)
     if (res.success && res.lotCode) {
-      setRows((prev) => [
+      setRows((prev: AuditRow[]) => [
         { id: res.lotCode!, date: 'Ahora mismo', source: file.name, records: '10 SKUs', status: 'Validado', tone: 'success' },
         ...prev,
       ])
@@ -468,7 +495,7 @@ function Integration() {
         <div className="p-4 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-500"><span>Mostrando {rows.length} de 128 lotes</span><button className="text-slate-300 hover:text-emerald-400">Ver historial completo →</button></div>
       </div>
       <div className="grid sm:grid-cols-3 gap-3 mt-4">
-        {[['database','12.458','Registros sincronizados'],['check','99,8%','Calidad de datos'],['activity','4m 12s','Tiempo de procesamiento']].map(([icon,value,label]) => <div key={label} className="panel px-5 py-4 flex items-center gap-3"><div className="data-icon"><Icon name={icon as IconName} /></div><div><p className="font-mono text-base font-semibold text-white">{value}</p><p className="text-[11px] text-slate-500">{label}</p></div></div>)}
+        {dataStats.map(s => <div key={s.label} className="panel px-5 py-4 flex items-center gap-3"><div className="data-icon"><Icon name={s.icon} /></div><div><p className="font-mono text-base font-semibold text-white">{s.value}</p><p className="text-[11px] text-slate-500">{s.label}</p></div></div>)}
       </div>
     </main>
   )

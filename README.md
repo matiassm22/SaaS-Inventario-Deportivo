@@ -76,7 +76,7 @@ npm run dev
 
 #### 2. Dashboard Web (React 19 + TypeScript + Vite)
 ```bash
-cd "SportStock AI Retail Dashboard"
+cd frontend
 npm install
 npm run dev
 ```
