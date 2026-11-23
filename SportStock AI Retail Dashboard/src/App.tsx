@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { api, type DashboardResponse } from './services/api'
 
 type IconName =
@@ -27,7 +27,7 @@ type IconName =
   | 'user'
 
 function Icon({ name, size = 18, className = '' }: { name: IconName; size?: number; className?: string }) {
-  const paths: Record<IconName, React.ReactNode> = {
+  const paths: Record<IconName, ReactNode> = {
     activity: <><path d="M3 12h4l2.5-7 4 14 2.5-7h5" /></>,
     alert: <><path d="M12 3 2.8 19a1.4 1.4 0 0 0 1.2 2h16a1.4 1.4 0 0 0 1.2-2Z" /><path d="M12 9v4M12 17h.01" /></>,
     arrow: <><path d="M5 12h14M14 7l5 5-5 5" /></>,
@@ -122,18 +122,28 @@ function Topbar({ page, setPage }: { page: Page; setPage: (p: Page) => void }) {
   )
 }
 
-function SelectPill({ icon, children }: { icon?: IconName; children: React.ReactNode }) {
+function SelectPill({ icon, children }: { icon?: IconName; children: ReactNode }) {
   return <button className="select-pill">{icon && <Icon name={icon} size={15} />}<span>{children}</span><Icon name="chevron" size={14} /></button>
 }
 
-const kpis = [
+interface KpiItem {
+  title: string
+  value: string
+  suffix?: string
+  meta: string
+  detail: string
+  tone: string
+  spark: string
+}
+
+const kpis: KpiItem[] = [
   { title: 'SKUs en quiebre crítico', value: '14', meta: '+3', detail: 'vs. semana anterior', tone: 'red', spark: '5,24 18,22 31,23 44,15 58,17 72,8 87,10 100,4' },
   { title: 'Demanda proyectada', value: '+18,5%', meta: 'Tendencia', detail: 'Fútbol · Torneo Nacional', tone: 'green', spark: '5,23 18,18 31,20 44,12 58,14 72,7 87,9 100,3' },
   { title: 'Órdenes sugeridas', value: '6', suffix: 'pendientes', meta: 'Revisar lote', detail: '$18,4M en reposición', tone: 'amber', spark: '5,20 18,20 31,15 44,17 58,10 72,12 87,8 100,7' },
   { title: 'Nivel de servicio de red', value: '91,4%', meta: 'Meta ≥95%', detail: '−3,6 pts bajo objetivo', tone: 'slate', spark: '5,14 18,13 31,12 44,15 58,12 72,13 87,8 100,9' },
 ]
 
-function KpiCard({ item }: { item: typeof kpis[number] }) {
+function KpiCard({ item }: { item: KpiItem }) {
   return (
     <div className="panel kpi-card">
       <div className="flex items-start justify-between gap-2">
@@ -185,7 +195,17 @@ function ForecastChart() {
   )
 }
 
-const urgent = [
+interface UrgentItem {
+  sku: string
+  name: string
+  detail: string
+  qty: string
+  chip: string
+  confidence: number
+  level: 'critical' | 'warning'
+}
+
+const urgent: UrgentItem[] = [
   { sku: 'RUN-001', name: 'Nike Vaporfly 3', detail: 'Talla 42 · Costanera Center', qty: '+25 u.', chip: '+35% Maratón Stgo.', confidence: 94, level: 'critical' },
   { sku: 'RUN-008', name: 'Cortaviento Trail Shield', detail: 'Costanera Center', qty: '+18 u.', chip: 'Pico estacional', confidence: 91, level: 'critical' },
   { sku: 'FUT-023', name: 'Balón Torneo Pro Match N°5', detail: 'Parque Arauco', qty: '+28 u.', chip: 'Torneo Nacional', confidence: 87, level: 'warning' },
@@ -294,7 +314,17 @@ function Dashboard() {
   )
 }
 
-const storeAlerts = [
+interface StoreAlert {
+  level: 'critical' | 'warning'
+  title: string
+  variant: string
+  stock: number
+  min: number
+  eta: string
+  sku: string
+}
+
+const storeAlerts: StoreAlert[] = [
   { level: 'critical', title: 'Nike Vaporfly 3', variant: 'Talla 42 · Running', stock: 3, min: 8, eta: 'Jueves 26', sku: 'RUN-001' },
   { level: 'critical', title: 'Cortaviento Trail Shield', variant: 'Talla M · Running', stock: 6, min: 12, eta: 'Viernes 27', sku: 'RUN-008' },
   { level: 'warning', title: 'Balón Torneo Pro Match N°5', variant: 'Fútbol', stock: 12, min: 18, eta: 'Lunes 30', sku: 'FUT-023' },
@@ -354,7 +384,16 @@ function StoreApp() {
   )
 }
 
-const auditRows = [
+interface AuditRow {
+  id: string
+  date: string
+  source: string
+  records: string
+  status: string
+  tone: string
+}
+
+const auditRows: AuditRow[] = [
   { id: 'LT-2025-0623-04', date: '23 Jun, 08:30', source: 'SAP Business One', records: '12.458', status: 'Validado', tone: 'success' },
   { id: 'LT-2025-0622-03', date: '22 Jun, 18:12', source: 'stock_semanal.xlsx', records: '4.862', status: 'Validado con alertas', tone: 'warning' },
   { id: 'LT-2025-0622-02', date: '22 Jun, 08:30', source: 'SAP Business One', records: '12.391', status: 'Validado', tone: 'success' },
@@ -371,7 +410,7 @@ function Integration() {
     let mounted = true
     api.getAuditLogs().then((logs) => {
       if (mounted && logs && logs.length > 0) {
-        setRows(logs)
+        setRows(logs as AuditRow[])
       }
     })
     return () => {
