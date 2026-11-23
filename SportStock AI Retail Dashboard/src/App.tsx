@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { api, DashboardResponse } from './services/api.js'
+import { useMemo, useRef, useState } from 'react'
+import { api } from './services/api'
 
 type IconName =
   | 'activity'
@@ -162,7 +162,7 @@ function ForecastChart() {
       </div>
       <div className="flex gap-5 mt-5 text-[11px] text-slate-400">
         <span className="flex items-center gap-2"><i className="legend-line solid" />Venta histórica real</span>
-        <span className="flex items-center gap-2"><i className="legend-line dashed" />Pronóstico IA</span>
+        <span className="flex items-center gap-2"><i className="legend-line dashed" />Pronóstico predictivo</span>
       </div>
       <div className="mt-4 h-[245px] relative">
         <svg viewBox="0 0 690 260" preserveAspectRatio="none" className="w-full h-full overflow-visible">

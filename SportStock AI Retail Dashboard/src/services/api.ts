@@ -39,7 +39,7 @@ export const api = {
       if (!res.ok) throw new Error('API offline');
       const json = await res.json();
       return json.data;
-    } catch (e) {
+    } catch {
       // Fallback a modo offline/demo
       return null;
     }
@@ -78,7 +78,7 @@ export const api = {
         return { success: true, lotCode: json.data?.job_id, message: 'Lote validado e ingresado' };
       }
       return { success: false, message: json.error || 'Error al procesar archivo' };
-    } catch (e: any) {
+    } catch {
       return { success: false, message: 'Backend no disponible, ejecutando validación local simulada.' };
     }
   },
