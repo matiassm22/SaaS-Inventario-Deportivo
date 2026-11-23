@@ -13,5 +13,6 @@ export const apiRouter = Router();
 apiRouter.get('/dashboard/resumen', ApiController.getDashboardSummary);
 apiRouter.patch('/ordenes/:id/estado', ApiController.updateOrderStatus);
 apiRouter.post('/ingesta/lote', upload.single('archivo'), ApiController.ingestBatch);
+apiRouter.get('/tienda/inventario', ApiController.getStoreInventory);
 apiRouter.post('/tienda/venta', ApiController.recordStoreSale);
 apiRouter.get('/integraciones/auditoria', ApiController.getAuditLogs);

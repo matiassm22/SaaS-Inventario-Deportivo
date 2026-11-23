@@ -162,4 +162,15 @@ export class ApiController {
       return res.status(500).json({ success: false, error: err.message });
     }
   }
+
+  // 6. GET /api/v1/tienda/inventario
+  public static async getStoreInventory(req: Request, res: Response) {
+    try {
+      const sucursalId = req.query.sucursal_id ? String(req.query.sucursal_id) : undefined;
+      const items = await db.getStoreInventory(sucursalId);
+      return res.json({ success: true, data: items });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  }
 }

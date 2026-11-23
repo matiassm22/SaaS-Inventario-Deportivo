@@ -189,6 +189,22 @@ export class DatabaseService {
     return this.memory.inventory;
   }
 
+  public async getStoreInventory(sucursalId?: string) {
+    let items = this.memory.inventory;
+    if (sucursalId) {
+      items = items.filter((x) => x.sucursal_id === sucursalId);
+    }
+    return items.map((x) => ({
+      sku: x.sku_codigo,
+      title: x.nombre,
+      variant: `${x.disciplina} · Reposición ${x.lead_time_dias}d`,
+      stockActual: x.stock_actual,
+      stockMinimo: x.stock_minimo,
+      etaReposicion: `En ${x.lead_time_dias} días hábiles`,
+      level: x.estado_alerta === 'CRITICO' ? 'critical' : x.estado_alerta === 'PREVENTIVO' ? 'warning' : 'optimal',
+    }));
+  }
+
   public async updateStock(skuCodigo: string, unitsToDeduct: number, sucursalId?: string): Promise<StoreInventory> {
     const item = this.memory.inventory.find(
       (x) => x.sku_codigo === skuCodigo && (!sucursalId || x.sucursal_id === sucursalId)
