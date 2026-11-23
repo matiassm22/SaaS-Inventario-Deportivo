@@ -31,7 +31,7 @@ export const OrderStatusUpdateSchema = z.object({
 export const StoreSaleSchema = z.object({
   sku_codigo: z.string().min(2),
   sucursal_id: z.string().optional(),
-  unidades: z.number().int().positive(),
+  unidades: z.number().int().nonnegative(),
 });
 
 // 4. Entidades del Dominio

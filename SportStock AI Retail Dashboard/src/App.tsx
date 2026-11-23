@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from 'react'
-import { api } from './services/api'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { api, type DashboardResponse } from './services/api'
 
 type IconName =
   | 'activity'
@@ -191,8 +191,27 @@ const urgent = [
   { sku: 'FUT-023', name: 'Balón Torneo Pro Match N°5', detail: 'Parque Arauco', qty: '+28 u.', chip: 'Torneo Nacional', confidence: 87, level: 'warning' },
 ]
 
-function ReplenishmentList() {
+function ReplenishmentList({ liveOrders }: { liveOrders?: DashboardResponse['sugerencias_urgentes'] }) {
   const [approved, setApproved] = useState<string[]>([])
+
+  const items = useMemo(() => {
+    if (liveOrders && liveOrders.length > 0) {
+      return liveOrders.map((o) => ({
+        sku: o.sku_codigo,
+        name: o.nombre_producto,
+        detail: o.sucursal_nombre,
+        qty: `+${o.cantidad_sugerida} u.`,
+        chip: o.evento_estacional,
+        confidence: o.confidence_score,
+        level: o.formula_desglose.stock_actual <= 3 ? 'critical' : 'warning',
+        formula: `Demanda esperada (${o.formula_desglose.demanda_esperada}) + Seguridad (${o.formula_desglose.stock_seguridad}) − Stock actual (${o.formula_desglose.stock_actual}) = ${o.cantidad_sugerida} unidades`,
+      }))
+    }
+    return urgent.map((u) => ({
+      ...u,
+      formula: 'Demanda esperada (28) + Seguridad (5) − Stock actual (8) = 25 unidades',
+    }))
+  }, [liveOrders])
 
   const handleApprove = async (sku: string) => {
     setApproved((prev) => [...prev, sku])
@@ -207,7 +226,7 @@ function ReplenishmentList() {
         <button className="icon-button small"><Icon name="more" /></button>
       </div>
       <div className="divide-y divide-slate-800/80 flex-1">
-        {urgent.map(item => {
+        {items.map(item => {
           const done = approved.includes(item.sku)
           return <div key={item.sku} className="p-4 lg:px-5">
             <div className="flex gap-3">
@@ -215,7 +234,7 @@ function ReplenishmentList() {
               <div className="min-w-0 flex-1">
                 <div className="flex justify-between gap-3">
                   <div><p className="text-[13px] font-medium text-slate-100 truncate">{item.name}</p><p className="text-[11px] text-slate-500 mt-0.5">{item.sku} · {item.detail}</p></div>
-                  <div className="text-right shrink-0 group relative"><p className="font-mono text-sm font-semibold text-emerald-400">{item.qty}</p><p className="text-[10px] text-slate-500 underline decoration-dotted cursor-help">Cantidad sugerida</p><div className="formula-tip">Demanda esperada (28) + Seguridad (5) − Stock actual (8) = <b>25 unidades</b></div></div>
+                  <div className="text-right shrink-0 group relative"><p className="font-mono text-sm font-semibold text-emerald-400">{item.qty}</p><p className="text-[10px] text-slate-500 underline decoration-dotted cursor-help">Cantidad sugerida</p><div className="formula-tip">{item.formula}</div></div>
                 </div>
                 <div className="flex items-center gap-3 mt-3">
                   <span className="season-chip"><Icon name="spark" size={11} />{item.chip}</span>
@@ -234,14 +253,38 @@ function ReplenishmentList() {
 }
 
 function Dashboard() {
+  const [data, setData] = useState<DashboardResponse | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+    api.getDashboardSummary().then((res) => {
+      if (mounted && res) {
+        setData(res)
+      }
+    })
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const currentKpis = useMemo(() => {
+    if (!data) return kpis
+    return [
+      { title: 'SKUs en quiebre crítico', value: String(data.kpis.skus_quiebre_critico), meta: '+3', detail: 'vs. semana anterior', tone: 'red', spark: '5,24 18,22 31,23 44,15 58,17 72,8 87,10 100,4' },
+      { title: 'Demanda proyectada', value: data.kpis.demanda_proyectada_delta, meta: 'Tendencia', detail: 'Fútbol · Torneo Nacional', tone: 'green', spark: '5,23 18,18 31,20 44,12 58,14 72,7 87,9 100,3' },
+      { title: 'Órdenes sugeridas', value: String(data.kpis.ordenes_sugeridas_count), suffix: 'pendientes', meta: 'Revisar lote', detail: `${data.kpis.monto_reposicion_estimado} en reposición`, tone: 'amber', spark: '5,20 18,20 31,15 44,17 58,10 72,12 87,8 100,7' },
+      { title: 'Nivel de servicio de red', value: data.kpis.nivel_servicio_red, meta: `Meta ${data.kpis.meta_nivel_servicio}`, detail: '−3,6 pts bajo objetivo', tone: 'slate', spark: '5,14 18,13 31,12 44,15 58,12 72,13 87,8 100,9' },
+    ]
+  }, [data])
+
   return (
     <main className="page-wrap">
       <div className="flex flex-col lg:flex-row lg:items-end gap-5 justify-between">
-        <div><p className="eyebrow text-emerald-400 mb-2">Lunes, 23 de junio</p><h1 className="page-title">Buenos días, Matías</h1><p className="page-subtitle">Hay 14 SKUs que requieren tu atención esta mañana.</p></div>
+        <div><p className="eyebrow text-emerald-400 mb-2">Lunes, 23 de junio</p><h1 className="page-title">Buenos días, Matías</h1><p className="page-subtitle">Hay {data ? data.kpis.skus_quiebre_critico : '14'} SKUs que requieren tu atención esta mañana.</p></div>
         <div className="flex flex-wrap gap-2"><SelectPill icon="building">Todas las sucursales (3)</SelectPill><SelectPill>Próximas 4 semanas</SelectPill></div>
       </div>
-      <div className="grid sm:grid-cols-2 2xl:grid-cols-4 gap-3.5 mt-7">{kpis.map(item => <KpiCard key={item.title} item={item} />)}</div>
-      <div className="grid 2xl:grid-cols-[minmax(0,1.55fr)_minmax(380px,.85fr)] gap-4 mt-4"><ForecastChart /><ReplenishmentList /></div>
+      <div className="grid sm:grid-cols-2 2xl:grid-cols-4 gap-3.5 mt-7">{currentKpis.map(item => <KpiCard key={item.title} item={item} />)}</div>
+      <div className="grid 2xl:grid-cols-[minmax(0,1.55fr)_minmax(380px,.85fr)] gap-4 mt-4"><ForecastChart /><ReplenishmentList liveOrders={data?.sugerencias_urgentes} /></div>
       <div className="panel mt-4 p-5 flex flex-col sm:flex-row gap-4 sm:items-center">
         <div className="h-10 w-10 rounded-lg bg-emerald-400/10 text-emerald-400 grid place-items-center"><Icon name="spark" /></div>
         <div><p className="text-sm font-medium text-slate-100">Insight de SportStock</p><p className="text-xs text-slate-400 mt-1">La demanda de Running subirá un 35% por la Maratón de Santiago. Anticipar 2 semanas reduce el costo de quiebre en $4,2M.</p></div>
@@ -262,6 +305,11 @@ function StoreApp() {
   const [query, setQuery] = useState('')
   const [scan, setScan] = useState(false)
   const filtered = storeAlerts.filter(x => x.title.toLowerCase().includes(query.toLowerCase()))
+
+  const handleConfirmCount = async (sku: string) => {
+    setCounted((prev) => [...prev, sku])
+    await api.recordStoreSale(sku, 0)
+  }
   return (
     <main className="page-wrap store-page">
       <div className="hidden lg:block mb-7"><p className="eyebrow text-emerald-400 mb-2">Vista móvil · operación en piso</p><h1 className="page-title">App de inventario en tienda</h1><p className="page-subtitle">Alertas claras para actuar sin dejar el pasillo.</p></div>
@@ -289,7 +337,7 @@ function StoreApp() {
                   <p className="text-[14px] text-slate-100 font-semibold mt-3">{item.title}</p><p className="text-[11px] text-slate-500 mt-0.5">{item.variant}</p>
                   <div className="stock-row"><div><small>Stock actual</small><b className={item.level === 'critical' ? 'text-red-400' : 'text-amber-400'}>{item.stock} u.</b></div><i /><div><small>Mínimo requerido</small><b>{item.min} u.</b></div></div>
                   <div className="arrival"><Icon name="box" size={14} /><span>Reposición estimada</span><b>{item.eta}</b></div>
-                  <button disabled={done} onClick={() => setCounted([...counted, item.sku])} className={`rack-button ${done ? 'done' : ''}`}>{done ? <><Icon name="check" size={15} />Conteo confirmado</> : 'Confirmar conteo en rack'}</button>
+                  <button disabled={done} onClick={() => handleConfirmCount(item.sku)} className={`rack-button ${done ? 'done' : ''}`}>{done ? <><Icon name="check" size={15} />Conteo confirmado</> : 'Confirmar conteo en rack'}</button>
                 </div>
               })}
             </div>
@@ -318,6 +366,18 @@ function Integration() {
   const [upload, setUpload] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
   const [rows, setRows] = useState(auditRows)
+
+  useEffect(() => {
+    let mounted = true
+    api.getAuditLogs().then((logs) => {
+      if (mounted && logs && logs.length > 0) {
+        setRows(logs)
+      }
+    })
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   const handleFileUpload = async (file: File) => {
     setUpload(file.name)

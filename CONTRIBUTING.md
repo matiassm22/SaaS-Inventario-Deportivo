@@ -38,23 +38,23 @@ develop (Rama de integración continua)
 
 ---
 
-## 3. Convención de Commits (Conventional Commits)
+## 3. Convención de Commits (Conventional Commits en Español)
 
-Los mensajes de commit deben respetar estrictamente el formato:
+Todos los mensajes de commit deben redactarse **estrictamente en español**, respetando la convención de Conventional Commits:
 
 ```
-<tipo>(<alcance opcional>): <descripción imperativa en español o inglés>
+<tipo>(<alcance opcional>): <descripción imperativa en español>
 ```
 
 ### Tipos Permitidos:
-- `feat`: Nueva funcionalidad (ej. `feat(ingest): add support for csv delimiter detection`).
-- `fix`: Corrección de un defecto (ej. `fix(stock): prevent negative stock updates in store endpoint`).
-- `docs`: Documentación (ej. `docs(api): update openapi contracts for replenishment endpoint`).
+- `feat`: Nueva funcionalidad (ej. `feat(ingesta): agregar soporte para detección automática de delimitador csv`).
+- `fix`: Corrección de un defecto (ej. `fix(stock): prevenir actualizaciones de stock negativo en endpoint de tienda`).
+- `docs`: Documentación (ej. `docs(api): actualizar contratos de endpoints de reabastecimiento`).
 - `style`: Ajustes visuales o formato sin cambio en lógica de negocio.
-- `refactor`: Reorganización de código sin alterar comportamiento externo.
+- `refactor`: Reorganización o limpieza de código sin alterar comportamiento externo.
 - `test`: Incorporación o corrección de suites de prueba.
-- `perf`: Mejoras de rendimiento (ej. `perf(db): add BRIN index to sales history table`).
-- `chore`: Tareas de build, paquetes o herramientas de desarrollo.
+- `perf`: Mejoras de rendimiento (ej. `perf(db): agregar indice BRIN en tabla de historial de ventas`).
+- `chore`: Tareas de configuración, compilación, paquetes o herramientas de desarrollo.
 
 ---
 

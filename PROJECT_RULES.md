@@ -55,6 +55,12 @@ Cualquier cambio de código, PR o propuesta de arquitectura que viole una de est
   1. Todos los endpoints REST deben comenzar obligatoriamente con el prefijo `/api/v1/`.
   2. Si se requiere una modificación que rompa la firma de entrada o salida, debe crearse una nueva ruta `/api/v2/`, manteniendo retrocompatibilidad durante al menos un ciclo semestral.
 
+### REGLA 8: Mensajes de Commit y Trazabilidad en Español Estricto
+* **Invariante**: Todo mensaje de commit en Git debe redactarse **exclusivamente en español**, empleando la sintaxis estándar de *Conventional Commits* (`tipo(alcance): descripción`).
+* **Implementación obligatoria**:
+  1. Queda estrictamente prohibido el uso de descripciones en inglés o spanglish en los commits del repositorio.
+  2. El contenido de los commits debe mantener un tono técnico, formal y libre de emojis o modismos.
+
 ---
 
 ## 2. Reglas de Negocio Específicas de Retail Deportivo
