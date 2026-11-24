@@ -52,21 +52,25 @@ END;
 $$ LANGUAGE plpgsql STABLE;
 
 -- 3. Políticas para PRODUCTOS_SKU
+DROP POLICY IF EXISTS p_productos_sku_select ON productos_sku;
 CREATE POLICY p_productos_sku_select ON productos_sku
     FOR SELECT TO authenticated, anon
     USING (cadena_id = current_cadena_id() OR current_cadena_id() IS NULL);
 
+DROP POLICY IF EXISTS p_productos_sku_admin ON productos_sku;
 CREATE POLICY p_productos_sku_admin ON productos_sku
     FOR ALL TO authenticated
     USING (cadena_id = current_cadena_id() AND current_user_role() IN ('ADMIN_TI', 'GERENTE_OPERACIONES'));
 
 -- 4. Políticas para INVENTARIO_TIENDA
+DROP POLICY IF EXISTS p_inventario_select ON inventario_tienda;
 CREATE POLICY p_inventario_select ON inventario_tienda
     FOR SELECT TO authenticated, anon
     USING (
         cadena_id = current_cadena_id() OR current_cadena_id() IS NULL
     );
 
+DROP POLICY IF EXISTS p_inventario_update_tienda ON inventario_tienda;
 CREATE POLICY p_inventario_update_tienda ON inventario_tienda
     FOR UPDATE TO authenticated
     USING (
@@ -77,10 +81,12 @@ CREATE POLICY p_inventario_update_tienda ON inventario_tienda
     );
 
 -- 5. Políticas para ÓRDENES_REPOSICIÓN
+DROP POLICY IF EXISTS p_ordenes_select ON ordenes_reposicion;
 CREATE POLICY p_ordenes_select ON ordenes_reposicion
     FOR SELECT TO authenticated, anon
     USING (cadena_id = current_cadena_id() OR current_cadena_id() IS NULL);
 
+DROP POLICY IF EXISTS p_ordenes_gerente_update ON ordenes_reposicion;
 CREATE POLICY p_ordenes_gerente_update ON ordenes_reposicion
     FOR UPDATE TO authenticated
     USING (cadena_id = current_cadena_id() AND current_user_role() IN ('GERENTE_OPERACIONES', 'ADMIN_TI'));
