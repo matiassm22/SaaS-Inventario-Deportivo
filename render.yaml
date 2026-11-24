@@ -35,7 +35,4 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: sportstock-backend
-          property: host
+        value: https://sportstock-backend.onrender.com/api/v1
