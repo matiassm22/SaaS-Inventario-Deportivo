@@ -77,3 +77,19 @@ declare module 'zod' {
   export const z: any;
   export default z;
 }
+
+declare module 'node:test' {
+  export default function test(name: string, fn: (t?: any) => Promise<void> | void): Promise<void> | void;
+  export function describe(name: string, fn: () => void): void;
+  export function it(name: string, fn: (t?: any) => Promise<void> | void): Promise<void> | void;
+}
+
+declare module 'node:assert' {
+  const assert: {
+    strictEqual(actual: any, expected: any, message?: string): void;
+    deepStrictEqual(actual: any, expected: any, message?: string): void;
+    ok(value: any, message?: string): void;
+    throws(block: () => any, error?: any, message?: string): void;
+  };
+  export default assert;
+}
