@@ -16,11 +16,11 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: SUPABASE_URL
-        value: https://qfgloryyggrolsqlsckh.supabase.co
+        sync: false
       - key: SUPABASE_ANON_KEY
-        value: sb_publishable_NI1El8WunistYs9lqNNXIg_pulR6Gi6
+        sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
-        value: sb_publishable_NI1El8WunistYs9lqNNXIg_pulR6Gi6
+        sync: false
 
   # 2. Frontend Dashboard en Render (Sitio Estático)
   - type: web

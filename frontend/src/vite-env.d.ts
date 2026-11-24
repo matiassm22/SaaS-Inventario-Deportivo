@@ -62,6 +62,14 @@ declare module 'react' {
   export function useMemo<T>(factory: () => T, deps: readonly any[] | undefined): T;
   export function useCallback<T extends (...args: any[]) => any>(callback: T, deps: readonly any[]): T;
 
+  export interface Context<T> {
+    Provider: ComponentType<{ value: T; children?: ReactNode }>;
+    Consumer: ComponentType<{ children: (value: T) => ReactNode }>;
+    displayName?: string;
+  }
+  export function createContext<T>(defaultValue: T): Context<T>;
+  export function useContext<T>(context: Context<T>): T;
+
   export interface RefObject<T> {
     readonly current: T | null;
   }

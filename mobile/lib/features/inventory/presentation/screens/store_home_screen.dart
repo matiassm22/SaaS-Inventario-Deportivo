@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../../main.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../../data/inventory_api_service.dart';
 import '../../domain/models/store_item.dart';
 import 'barcode_scanner_screen.dart';
@@ -48,14 +49,18 @@ class _StoreHomeScreenState extends State<StoreHomeScreen> {
     );
 
     if (scannedCode != null && scannedCode.isNotEmpty && mounted) {
+      final palette = AppColors.of(context);
       setState(() {
         _searchQuery = scannedCode;
         _searchController.text = scannedCode;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Código escaneado: $scannedCode'),
-          backgroundColor: AppColors.optimalGreen,
+          content: Text(
+            'Código escaneado: $scannedCode',
+            style: TextStyle(color: palette.accentForeground, fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: palette.optimalGreen,
           duration: const Duration(seconds: 2),
         ),
       );
@@ -67,10 +72,14 @@ class _StoreHomeScreenState extends State<StoreHomeScreen> {
     await _apiService.recordStoreSale(item.sku, 0);
 
     if (mounted) {
+      final palette = AppColors.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Conteo verificado en rack para ${item.sku}'),
-          backgroundColor: AppColors.surface,
+          content: Text(
+            'Conteo verificado en rack para ${item.sku}',
+            style: TextStyle(color: palette.textPrimary),
+          ),
+          backgroundColor: palette.surface,
           duration: const Duration(seconds: 2),
         ),
       );
@@ -79,6 +88,9 @@ class _StoreHomeScreenState extends State<StoreHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppColors.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final filtered = _items
         .where((x) =>
             x.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
@@ -90,41 +102,58 @@ class _StoreHomeScreenState extends State<StoreHomeScreen> {
     final optimalCount = _items.where((x) => x.level == AlertLevel.optimal).length;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: palette.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: palette.background,
         elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            Text('SportStock', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-            Text('Sucursal Costanera Center', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+          children: [
+            Text(
+              'SportStock',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: palette.textPrimary),
+            ),
+            Text(
+              'Sucursal Costanera Center',
+              style: TextStyle(fontSize: 12, color: palette.textMuted),
+            ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.qr_code_scanner, color: AppColors.optimalGreen),
+            icon: Icon(
+              isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+              color: palette.textSecondary,
+            ),
+            tooltip: isDark ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro',
+            onPressed: () => toggleAppThemeMode(context),
+          ),
+          IconButton(
+            icon: Icon(Icons.qr_code_scanner, color: palette.optimalGreen),
             tooltip: 'Escanear SKU',
             onPressed: _openScanner,
           ),
           CircleAvatar(
             radius: 16,
-            backgroundColor: AppColors.optimalGreenBg,
-            child: const Text('MG', style: TextStyle(fontSize: 10, color: AppColors.optimalGreen, fontWeight: FontWeight.bold)),
+            backgroundColor: palette.optimalGreenBg,
+            child: Text(
+              'MG',
+              style: TextStyle(fontSize: 10, color: palette.optimalGreen, fontWeight: FontWeight.bold),
+            ),
           ),
           const SizedBox(width: 16),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.optimalGreen,
-        foregroundColor: Colors.black,
+        backgroundColor: palette.optimalGreen,
+        foregroundColor: palette.accentForeground,
         icon: const Icon(Icons.qr_code_scanner),
         label: const Text('Escanear', style: TextStyle(fontWeight: FontWeight.bold)),
         onPressed: _openScanner,
       ),
       body: RefreshIndicator(
-        color: AppColors.optimalGreen,
-        backgroundColor: AppColors.surface,
+        color: palette.optimalGreen,
+        backgroundColor: palette.surface,
         onRefresh: _loadInventory,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -133,27 +162,30 @@ class _StoreHomeScreenState extends State<StoreHomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Saludo de turno
-              const Text('Hola, Matías', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+              Text(
+                'Hola, Matías',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: palette.textPrimary),
+              ),
               const SizedBox(height: 4),
-              const Text('Turno mañana · 08:00–16:00', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+              Text('Turno mañana · 08:00–16:00', style: TextStyle(fontSize: 12, color: palette.textMuted)),
               const SizedBox(height: 16),
 
               // Semáforo dinámico de contadores
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: palette.surface,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: palette.border),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildCounter('$criticalCount', 'Críticos', AppColors.criticalRed),
-                    _buildDivider(),
-                    _buildCounter('$warningCount', 'Preventivos', AppColors.warningAmber),
-                    _buildDivider(),
-                    _buildCounter('$optimalCount', 'Óptimos', AppColors.optimalGreen),
+                    _buildCounter(palette, '$criticalCount', 'Críticos', palette.criticalRed),
+                    _buildDivider(palette),
+                    _buildCounter(palette, '$warningCount', 'Preventivos', palette.warningAmber),
+                    _buildDivider(palette),
+                    _buildCounter(palette, '$optimalCount', 'Óptimos', palette.optimalGreen),
                   ],
                 ),
               ),
@@ -162,33 +194,38 @@ class _StoreHomeScreenState extends State<StoreHomeScreen> {
               // Buscador
               TextField(
                 controller: _searchController,
+                style: TextStyle(color: palette.textPrimary, fontSize: 14),
                 onChanged: (val) => setState(() => _searchQuery = val),
                 decoration: InputDecoration(
                   hintText: 'Buscar SKU o producto...',
-                  hintStyle: const TextStyle(fontSize: 13, color: AppColors.textMuted),
-                  prefixIcon: const Icon(Icons.search, color: AppColors.textMuted),
+                  hintStyle: TextStyle(fontSize: 13, color: palette.textMuted),
+                  prefixIcon: Icon(Icons.search, color: palette.textMuted),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.clear, color: AppColors.textMuted, size: 18),
+                          icon: Icon(Icons.clear, color: palette.textMuted, size: 18),
                           onPressed: () {
                             _searchController.clear();
                             setState(() => _searchQuery = '');
                           },
                         )
                       : IconButton(
-                          icon: const Icon(Icons.qr_code_scanner, color: AppColors.optimalGreen),
+                          icon: Icon(Icons.qr_code_scanner, color: palette.optimalGreen),
                           onPressed: _openScanner,
                         ),
                   filled: true,
-                  fillColor: AppColors.surface,
+                  fillColor: palette.surface,
                   contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppColors.border),
+                    borderSide: BorderSide(color: palette.border),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppColors.border),
+                    borderSide: BorderSide(color: palette.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: palette.optimalGreen, width: 1.5),
                   ),
                 ),
               ),
@@ -198,12 +235,15 @@ class _StoreHomeScreenState extends State<StoreHomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Prioridad para hoy', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                  Text(
+                    'Prioridad para hoy',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.textPrimary),
+                  ),
                   if (_isLoading)
-                    const SizedBox(
+                    SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.optimalGreen),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: palette.optimalGreen),
                     ),
                 ],
               ),
@@ -214,24 +254,24 @@ class _StoreHomeScreenState extends State<StoreHomeScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: palette.surface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: palette.border),
                   ),
                   child: Column(
                     children: [
-                      const Icon(Icons.search_off, color: AppColors.textMuted, size: 36),
+                      Icon(Icons.search_off, color: palette.textMuted, size: 36),
                       const SizedBox(height: 8),
                       Text(
                         _searchQuery.isEmpty ? 'No hay registros cargados' : 'No se encontró el SKU "$_searchQuery"',
-                        style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                        style: TextStyle(color: palette.textMuted, fontSize: 13),
                       ),
                     ],
                   ),
                 )
               else
-                ...filtered.map((item) => _buildAlertCard(item)),
-              const SizedBox(height: 70), // Espacio para el FloatingActionButton
+                ...filtered.map((item) => _buildAlertCard(palette, item)),
+              const SizedBox(height: 70),
             ],
           ),
         ),
@@ -239,7 +279,7 @@ class _StoreHomeScreenState extends State<StoreHomeScreen> {
     );
   }
 
-  Widget _buildCounter(String count, String label, Color color) {
+  Widget _buildCounter(AppPalette palette, String count, String label, Color color) {
     return Column(
       children: [
         Row(
@@ -247,20 +287,20 @@ class _StoreHomeScreenState extends State<StoreHomeScreen> {
           children: [
             Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
             const SizedBox(width: 6),
-            Text(count, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+            Text(count, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: palette.textPrimary)),
           ],
         ),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
+        Text(label, style: TextStyle(fontSize: 10, color: palette.textMuted)),
       ],
     );
   }
 
-  Widget _buildDivider() {
-    return Container(width: 1, height: 28, color: AppColors.border);
+  Widget _buildDivider(AppPalette palette) {
+    return Container(width: 1, height: 28, color: palette.border);
   }
 
-  Widget _buildAlertCard(StoreItem item) {
+  Widget _buildAlertCard(AppPalette palette, StoreItem item) {
     final isCritical = item.level == AlertLevel.critical;
     final isWarning = item.level == AlertLevel.warning;
 
@@ -268,9 +308,9 @@ class _StoreHomeScreenState extends State<StoreHomeScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: palette.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -282,10 +322,10 @@ class _StoreHomeScreenState extends State<StoreHomeScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: isCritical
-                      ? AppColors.criticalRedBg
+                      ? palette.criticalRedBg
                       : isWarning
-                          ? AppColors.warningAmberBg
-                          : AppColors.optimalGreenBg,
+                          ? palette.warningAmberBg
+                          : palette.optimalGreenBg,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -298,60 +338,60 @@ class _StoreHomeScreenState extends State<StoreHomeScreen> {
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                     color: isCritical
-                        ? AppColors.criticalRed
+                        ? palette.criticalRed
                         : isWarning
-                            ? AppColors.warningAmber
-                            : AppColors.optimalGreen,
+                            ? palette.warningAmber
+                            : palette.optimalGreen,
                   ),
                 ),
               ),
-              Text(item.sku, style: const TextStyle(fontSize: 10, color: AppColors.textMuted, fontFamily: 'monospace')),
+              Text(item.sku, style: TextStyle(fontSize: 10, color: palette.textMuted, fontFamily: 'monospace')),
             ],
           ),
           const SizedBox(height: 10),
-          Text(item.title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-          Text(item.variant, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+          Text(item.title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: palette.textPrimary)),
+          Text(item.variant, style: TextStyle(fontSize: 11, color: palette.textMuted)),
           const SizedBox(height: 12),
 
           // Stock Info Row
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-            decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(color: palette.background, borderRadius: BorderRadius.circular(8)),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Stock actual', style: TextStyle(fontSize: 9, color: AppColors.textMuted)),
+                    Text('Stock actual', style: TextStyle(fontSize: 9, color: palette.textMuted)),
                     Text(
                       '${item.stockActual} u.',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: isCritical
-                            ? AppColors.criticalRed
+                            ? palette.criticalRed
                             : isWarning
-                                ? AppColors.warningAmber
-                                : AppColors.optimalGreen,
+                                ? palette.warningAmber
+                                : palette.optimalGreen,
                       ),
                     ),
                   ],
                 ),
-                Container(width: 1, height: 20, color: AppColors.border),
+                Container(width: 1, height: 20, color: palette.border),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Mínimo requerido', style: TextStyle(fontSize: 9, color: AppColors.textMuted)),
-                    Text('${item.stockMinimo} u.', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                    Text('Mínimo requerido', style: TextStyle(fontSize: 9, color: palette.textMuted)),
+                    Text('${item.stockMinimo} u.', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: palette.textPrimary)),
                   ],
                 ),
-                Container(width: 1, height: 20, color: AppColors.border),
+                Container(width: 1, height: 20, color: palette.border),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Llega reposición', style: TextStyle(fontSize: 9, color: AppColors.textMuted)),
-                    Text(item.etaReposicion, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.optimalGreen)),
+                    Text('Llega reposición', style: TextStyle(fontSize: 9, color: palette.textMuted)),
+                    Text(item.etaReposicion, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: palette.optimalGreen)),
                   ],
                 ),
               ],
@@ -365,9 +405,9 @@ class _StoreHomeScreenState extends State<StoreHomeScreen> {
             height: 38,
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
-                foregroundColor: item.isCounted ? AppColors.textMuted : AppColors.optimalGreen,
-                side: BorderSide(color: item.isCounted ? AppColors.border : AppColors.optimalGreen),
-                backgroundColor: item.isCounted ? AppColors.optimalGreenBg.withOpacity(0.3) : Colors.transparent,
+                foregroundColor: item.isCounted ? palette.textMuted : palette.optimalGreen,
+                side: BorderSide(color: item.isCounted ? palette.border : palette.optimalGreen),
+                backgroundColor: item.isCounted ? palette.optimalGreenBg : Colors.transparent,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () => _handleConfirmItem(item),
@@ -376,7 +416,10 @@ class _StoreHomeScreenState extends State<StoreHomeScreen> {
                 children: [
                   if (item.isCounted) const Icon(Icons.check, size: 16),
                   if (item.isCounted) const SizedBox(width: 6),
-                  Text(item.isCounted ? 'Conteo confirmado' : 'Confirmar conteo en rack', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  Text(
+                    item.isCounted ? 'Conteo confirmado' : 'Confirmar conteo en rack',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
             ),

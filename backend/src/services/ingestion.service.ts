@@ -38,7 +38,7 @@ export class IngestionService {
         validRows.push(parsed.data);
       } else {
         errors.push({
-          row: i + 1,
+          row: i,
           error: parsed.error.issues.map((iss: any) => `${iss.path.join('.')}: ${iss.message}`).join(', '),
         });
       }

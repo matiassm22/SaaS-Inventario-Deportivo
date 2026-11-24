@@ -1,10 +1,11 @@
 {
+  "title": "SportStockAI — Plataforma SaaS de Optimización de Inventario",
+  "language": "es",
   "description": "Anticipa quiebres de stock y recomienda reabastecimientos para tiendas deportivas, ayudando a gerentes y equipos de tienda a mantener el inventario al día.",
   "robots": {
     "index": false
   },
   "accessibility": {
-    "addBypassLinks": false,
-    "ignoreReducedMotion": false
+    "addBypassLinks": false
   }
 }

@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import express from 'express';
 import { AuthUser, UserRole } from '../types/index.js';
 import { config } from '../config/env.js';
@@ -24,7 +25,7 @@ export const KNOWN_USERS: Record<string, AuthUser> = {
     rol: 'JEFE_TIENDA',
     cadena_id: '11111111-1111-1111-1111-111111111111',
     cadena_nombre: 'Marathon Sports Chile',
-    sucursal_id: '22222222-2222-2222-2222-222222222201',
+    sucursal_id: 'SUC-01',
   },
   'auditor@marathonsports.cl': {
     id: 'u-103',
@@ -44,29 +45,84 @@ export const KNOWN_USERS: Record<string, AuthUser> = {
   },
 };
 
-/**
- * Codifica un token de sesión seguro base64 estructurado para el entorno B2B.
- */
-export function generateToken(user: AuthUser): string {
-  const payload = {
-    ...user,
-    exp: Date.now() + 24 * 60 * 60 * 1000, // 24 horas
-  };
-  return Buffer.from(JSON.stringify(payload)).toString('base64');
+function toBase64Url(input: string | Buffer): string {
+  return Buffer.from(input)
+    .toString('base64')
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
+}
+
+function fromBase64Url(input: string): string {
+  const padded = input.replace(/-/g, '+').replace(/_/g, '/');
+  const padLen = (4 - (padded.length % 4)) % 4;
+  return Buffer.from(padded + '='.repeat(padLen), 'base64').toString('utf-8');
+}
+
+function signSegment(data: string): string {
+  return toBase64Url(
+    crypto.createHmac('sha256', config.jwtSecret).update(data).digest()
+  );
 }
 
 /**
- * Decodifica y valida un token de sesión.
+ * Genera un JWT estándar RFC 7519 firmado con HMAC-SHA256 (HS256)
+ * incluyendo claims de tenant (cadena_id) y rol RBAC.
+ */
+export function generateToken(user: AuthUser): string {
+  const header = toBase64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const nowSec = Math.floor(Date.now() / 1000);
+  const payload = toBase64Url(
+    JSON.stringify({
+      ...user,
+      iat: nowSec,
+      exp: nowSec + 24 * 60 * 60, // 24 horas
+    })
+  );
+  const signature = signSegment(`${header}.${payload}`);
+  return `${header}.${payload}.${signature}`;
+}
+
+/**
+ * Verifica firma criptográfica HS256 (constant-time) y expiración del JWT.
  */
 export function verifyToken(token: string): AuthUser | null {
   try {
-    const raw = Buffer.from(token, 'base64').toString('utf-8');
-    const parsed = JSON.parse(raw);
-    if (parsed.exp && parsed.exp < Date.now()) {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
       return null;
     }
+
+    const [headerB64, payloadB64, signatureB64] = parts;
+    const expectedSig = signSegment(`${headerB64}.${payloadB64}`);
+
+    const sigBuf = Buffer.from(signatureB64, 'utf-8');
+    const expBuf = Buffer.from(expectedSig, 'utf-8');
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+      return null;
+    }
+
+    const header = JSON.parse(fromBase64Url(headerB64));
+    if (header.alg !== 'HS256') {
+      return null;
+    }
+
+    const parsed = JSON.parse(fromBase64Url(payloadB64));
+    const nowSec = Math.floor(Date.now() / 1000);
+    if (typeof parsed.exp === 'number' && parsed.exp < nowSec) {
+      return null;
+    }
+
     if (parsed.cadena_id && parsed.rol && parsed.email) {
-      return parsed as AuthUser;
+      return {
+        id: parsed.id,
+        email: parsed.email,
+        nombre: parsed.nombre,
+        rol: parsed.rol,
+        cadena_id: parsed.cadena_id,
+        cadena_nombre: parsed.cadena_nombre,
+        sucursal_id: parsed.sucursal_id,
+      };
     }
     return null;
   } catch {
@@ -75,7 +131,7 @@ export function verifyToken(token: string): AuthUser | null {
 }
 
 /**
- * Middleware que exige autenticación estricta (Bearer Token).
+ * Middleware que exige autenticación estricta (Bearer JWT HS256).
  */
 export function requireAuth(req: AuthenticatedRequest, res: express.Response, next: express.NextFunction) {
   const authHeader = req.headers.authorization;
@@ -98,7 +154,7 @@ export function requireAuth(req: AuthenticatedRequest, res: express.Response, ne
       type: 'https://api.sportstock.ai/errors/invalid-token',
       title: 'Token Inválido o Expirado',
       status: 401,
-      detail: 'El token proporcionado no es válido o ha expirado. Inicie sesión nuevamente.',
+      detail: 'El token proporcionado no tiene firma válida o ha expirado. Inicie sesión nuevamente.',
       instance: req.originalUrl,
     });
   }
@@ -109,7 +165,8 @@ export function requireAuth(req: AuthenticatedRequest, res: express.Response, ne
 }
 
 /**
- * Middleware que permite acceso opcional, asignando usuario demo si no se provee token en desarrollo.
+ * Middleware que permite lectura en modo consulta, inyectando tenant desde el JWT
+ * o usando la cadena predeterminada si no se envía token.
  */
 export function optionalAuth(req: AuthenticatedRequest, res: express.Response, next: express.NextFunction) {
   const authHeader = req.headers.authorization;
@@ -124,7 +181,6 @@ export function optionalAuth(req: AuthenticatedRequest, res: express.Response, n
     }
   }
 
-  // Si no hay token, inyecta el inquilino predeterminado en desarrollo para no bloquear endpoints demo
   req.user = KNOWN_USERS['gerente@marathonsports.cl'];
   req.tenantId = req.user.cadena_id;
   return next();

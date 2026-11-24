@@ -5,6 +5,7 @@ export type JobStatus = 'PENDIENTE' | 'EN_PROCESO' | 'COMPLETADO' | 'FALLIDO';
 
 export interface BackgroundJob {
   id: string;
+  cadena_id: string;
   tipo: 'INGESTA_MASIVA' | 'CALCULO_PREDICTIVO';
   estado: JobStatus;
   progreso: number;
@@ -25,9 +26,16 @@ export class QueueService {
   /**
    * Encola un lote de ingesta masiva sin bloquear el hilo principal de la API.
    */
-  public async enqueueIngestionJob(lotCode: string, source: string, rows: IngestionRow[]): Promise<BackgroundJob> {
+  public async enqueueIngestionJob(
+    cadenaId: string,
+    lotCode: string,
+    source: string,
+    rows: IngestionRow[],
+    errors: { row: number; error: string }[] = []
+  ): Promise<BackgroundJob> {
     const job: BackgroundJob = {
       id: lotCode,
+      cadena_id: cadenaId,
       tipo: 'INGESTA_MASIVA',
       estado: 'PENDIENTE',
       progreso: 0,
@@ -38,13 +46,12 @@ export class QueueService {
 
     this.jobs.set(job.id, job);
 
-    // Desacoplamiento del Event Loop
     setImmediate(async () => {
       try {
         job.estado = 'EN_PROCESO';
         job.progreso = 25;
 
-        await db.saveIngestionBatch(lotCode, source, rows);
+        await db.saveIngestionBatch(cadenaId, lotCode, source, rows, errors);
 
         job.registrosProcesados = rows.length;
         job.progreso = 100;
@@ -60,12 +67,16 @@ export class QueueService {
     return job;
   }
 
-  public getJob(jobId: string): BackgroundJob | undefined {
-    return this.jobs.get(jobId);
+  public getJob(jobId: string, cadenaId?: string): BackgroundJob | undefined {
+    const job = this.jobs.get(jobId);
+    if (!job) return undefined;
+    if (cadenaId && job.cadena_id !== cadenaId) return undefined;
+    return job;
   }
 
-  public getAllJobs(): BackgroundJob[] {
-    return Array.from(this.jobs.values());
+  public getAllJobs(cadenaId?: string): BackgroundJob[] {
+    const all = Array.from(this.jobs.values());
+    return cadenaId ? all.filter((j) => j.cadena_id === cadenaId) : all;
   }
 }
 
