@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { api, type DashboardResponse } from './services/api'
+import { api, type DashboardResponse, type AuthUser } from './services/api'
 
 type IconName =
   | 'activity'
@@ -16,6 +16,8 @@ type IconName =
   | 'home'
   | 'info'
   | 'layers'
+  | 'lock'
+  | 'logout'
   | 'menu'
   | 'more'
   | 'refresh'
@@ -33,20 +35,22 @@ function Icon({ name, size = 18, className = '' }: { name: IconName; size?: numb
     arrow: <><path d="M5 12h14M14 7l5 5-5 5" /></>,
     barcode: <><path d="M3 5v14M7 5v14M10 5v14M15 5v14M18 5v14M21 5v14" /></>,
     box: <><path d="m4 7 8-4 8 4-8 4Z" /><path d="m4 7v10l8 4 8-4V7M12 11v10" /></>,
-    building: <><path d="M4 21V5l8-3 8 3v16M8 9h2M14 9h2M8 13h2M14 13h2M9 21v-4h6v4" /></>,
+    building: <><path d="M4 21V518-3 8 3v16M8 9h2M14 9h2M8 13h2M14 13h2M9 21v-4h6v4" /></>,
     check: <><path d="m5 12 4 4L19 6" /></>,
-    chevron: <><path d="m8 10 4 4 4-4" /></>,
+    chevron: <><path d="m9 18 6-6-6-6" /></>,
     cloud: <><path d="M17.5 19H6a4 4 0 0 1-.5-8A6 6 0 0 1 17 9a5 5 0 0 1 .5 10Z" /><path d="M12 12v6M9.5 14.5 12 12l2.5 2.5" /></>,
     database: <><ellipse cx="12" cy="5" rx="8" ry="3" /><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" /></>,
     file: <><path d="M14 2H6a2 2 0 0 0-2 2v16h16V8Z" /><path d="M14 2v6h6M8 13h8M8 17h5" /></>,
     home: <><path d="m3 11 9-8 9 8" /><path d="M5 10v11h14V10M9 21v-6h6v6" /></>,
     info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></>,
-    layers: <><path d="m12 2 9 5-9 5-9-5Z" /><path d="m3 12 9 5 9-5M3 17l9 5 9-5" /></>,
+    layers: <><path d="m12 2 9 5-9 5-9-5Z" /><path d="m3 12 9 5 9-5M3 1719 5 9-5" /></>,
+    lock: <><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></>,
+    logout: <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></>,
     menu: <><path d="M4 7h16M4 12h16M4 17h16" /></>,
     more: <><circle cx="5" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="19" cy="12" r="1" fill="currentColor" stroke="none" /></>,
     refresh: <><path d="M20 11a8 8 0 0 0-14.8-4L3 10M4 13a8 8 0 0 0 14.8 4L21 14" /><path d="M3 4v6h6M21 20v-6h-6" /></>,
     search: <><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></>,
-    settings: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z" /></>,
+    settings: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.91.1 1.7 0 0 0-1.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4v2l-1.2.3M4 12a8 8 0 0 1 8-8" /></>,
     spark: <><path d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2ZM19 14l.7 2.3L22 17l-2.3.7L19 20l-.7-2.3L16 17l2.3-.7Z" /></>,
     store: <><path d="M3 9h18l-2-6H5Z" /><path d="M5 9v12h14V9M9 21v-6h6v6" /><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0" /></>,
     upload: <><path d="M12 16V4M7 9l5-5 5 5M4 20h16" /></>,
@@ -66,12 +70,135 @@ function Logo({ compact = false }: { compact?: boolean }) {
 
 type Page = 'dashboard' | 'store' | 'integration'
 
-function Sidebar({ page, setPage }: { page: Page; setPage: (p: Page) => void }) {
+function LoginModal({ isOpen, onClose, onLoginSuccess }: { isOpen: boolean; onClose: () => void; onLoginSuccess: (user: AuthUser) => void }) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('Password123!')
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  if (!isOpen) return null
+
+  const handleLogin = async (loginEmail?: string, loginPass?: string) => {
+    const e = loginEmail || email
+    const p = loginPass || password
+    setError(null)
+    setLoading(true)
+    const res = await api.login(e, p)
+    setLoading(false)
+    if (res.success && res.user) {
+      onLoginSuccess(res.user)
+      onClose()
+    } else {
+      setError(res.error || 'Credenciales incorrectas.')
+    }
+  }
+
+  const quickUsers = [
+    { label: 'Gerente de Operaciones', name: 'Matías Muñoz', email: 'gerente@marathonsports.cl', role: 'GERENTE_OPERACIONES', tenant: 'Marathon Sports' },
+    { label: 'Jefe de Tienda', name: 'Encargado Costanera', email: 'tienda@marathonsports.cl', role: 'JEFE_TIENDA', tenant: 'Marathon Sports' },
+    { label: 'Auditor Financiero', name: 'Auditor Externo', email: 'auditor@marathonsports.cl', role: 'AUDITOR', tenant: 'Marathon Sports' },
+    { label: 'Gerente de Operaciones', name: 'Gerencia Sparta', email: 'gerente@sparta.cl', role: 'GERENTE_OPERACIONES', tenant: 'Sparta Deportes' },
+  ]
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+      <div className="panel max-w-md w-full p-6 border border-slate-700 bg-slate-900 shadow-2xl rounded-2xl">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <Logo compact />
+            <div>
+              <h2 className="text-sm font-semibold text-white">Autenticación Empresarial</h2>
+              <p className="text-[11px] text-slate-400">Control Multi-Inquilino y Roles RBAC</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white text-base">✕</button>
+        </div>
+
+        {error && (
+          <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-400">
+            {error}
+          </div>
+        )}
+
+        <div className="mt-4">
+          <p className="text-xs font-medium text-slate-300 mb-2">Acceso rápido por perfil y tenant:</p>
+          <div className="grid gap-2">
+            {quickUsers.map(u => (
+              <button
+                key={u.email}
+                onClick={() => handleLogin(u.email, 'Password123!')}
+                className="text-left p-2.5 rounded-lg border border-slate-800 bg-slate-800/40 hover:bg-slate-800 hover:border-emerald-500/50 transition-all flex items-center justify-between"
+              >
+                <div>
+                  <p className="text-xs font-semibold text-slate-200">{u.label} · <span className="text-slate-400 font-normal">{u.name}</span></p>
+                  <p className="text-[10px] text-slate-400 font-mono">{u.email}</p>
+                </div>
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-700 text-emerald-400">{u.tenant}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-5 pt-4 border-t border-slate-800">
+          <p className="text-xs font-medium text-slate-300 mb-2">O ingrese credenciales corporativas:</p>
+          <form onSubmit={(e: any) => { e.preventDefault(); handleLogin(); }} className="space-y-3">
+            <div>
+              <label className="text-[11px] text-slate-400 block mb-1">Correo electrónico</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e: any) => setEmail(e.target.value)}
+                placeholder="usuario@cadena.cl"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] text-slate-400 block mb-1">Contraseña</label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e: any) => setPassword(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full primary-button py-2.5 text-xs font-medium flex items-center justify-center gap-2 mt-4"
+            >
+              {loading ? <Icon name="refresh" className="animate-spin" size={14} /> : <Icon name="check" size={14} />}
+              {loading ? 'Verificando...' : 'Iniciar sesión'}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Sidebar({
+  page,
+  setPage,
+  user,
+  onOpenLogin,
+  onLogout,
+}: {
+  page: Page;
+  setPage: (p: Page) => void;
+  user: AuthUser | null;
+  onOpenLogin: () => void;
+  onLogout: () => void;
+}) {
   const items: { id: Page; label: string; icon: IconName }[] = [
     { id: 'dashboard', label: 'Vista general', icon: 'home' },
     { id: 'store', label: 'Operación tienda', icon: 'store' },
     { id: 'integration', label: 'Integraciones', icon: 'database' },
   ]
+
+  const userInitials = user ? user.nombre.split(' ').map(n => n[0]).join('').slice(0, 2) : 'AN'
+
   return (
     <aside className="hidden xl:flex w-[232px] shrink-0 border-r border-slate-800/80 bg-[#0a0e17] flex-col p-4">
       <div className="h-14 flex items-center px-2 mb-4"><Logo /></div>
@@ -91,32 +218,71 @@ function Sidebar({ page, setPage }: { page: Page; setPage: (p: Page) => void }) 
       </div>
       <div className="mt-auto rounded-xl border border-slate-800 bg-slate-900/60 p-3.5">
         <div className="flex items-center gap-2 text-xs font-medium text-slate-200"><span className="live-dot" />Motor predictivo</div>
-        <p className="text-[11px] text-slate-500 mt-1.5">Actualizado hoy, 08:30 hrs</p>
+        <p className="text-[11px] text-slate-500 mt-1.5">Tenant: {user ? user.cadena_nombre : 'Demo activo'}</p>
       </div>
       <div className="flex items-center gap-3 px-2 pt-4 mt-3 border-t border-slate-800">
-        <div className="avatar">MG</div>
-        <div className="min-w-0"><p className="text-xs font-medium text-slate-200 truncate">Matías González</p><p className="text-[11px] text-slate-500">Gerente de Operaciones</p></div>
-        <Icon name="more" className="ml-auto text-slate-500" />
+        <div className="avatar">{userInitials}</div>
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-slate-200 truncate">{user ? user.nombre : 'Sin sesión'}</p>
+          <p className="text-[11px] text-slate-500 truncate">{user ? user.rol : 'Haga clic para ingresar'}</p>
+        </div>
+        {user ? (
+          <button onClick={onLogout} title="Cerrar sesión" className="ml-auto text-slate-500 hover:text-red-400">
+            <Icon name="logout" size={16} />
+          </button>
+        ) : (
+          <button onClick={onOpenLogin} title="Iniciar sesión" className="ml-auto text-emerald-400 hover:text-emerald-300">
+            <Icon name="user" size={16} />
+          </button>
+        )}
       </div>
     </aside>
   )
 }
 
-function Topbar({ page, setPage }: { page: Page; setPage: (p: Page) => void }) {
+function Topbar({
+  page,
+  setPage,
+  user,
+  onOpenLogin,
+  onLogout,
+}: {
+  page: Page;
+  setPage: (p: Page) => void;
+  user: AuthUser | null;
+  onOpenLogin: () => void;
+  onLogout: () => void;
+}) {
   return (
     <header className="h-[72px] border-b border-slate-800/80 bg-[#0b0f19]/90 flex items-center px-5 lg:px-7 gap-4 sticky top-0 z-20 backdrop-blur-xl">
       <div className="xl:hidden"><Logo /></div>
       <div className="hidden sm:flex items-center gap-2 text-sm text-slate-400">
         <span className="font-medium text-slate-100">{page === 'dashboard' ? 'Vista general' : page === 'store' ? 'Operación en tienda' : 'Integraciones y datos'}</span>
-        <span className="text-slate-700">/</span><span>Marathon Sports Chile</span>
+        <span className="text-slate-700">/</span><span className="text-emerald-400 font-semibold">{user ? user.cadena_nombre : 'Marathon Sports Chile'}</span>
       </div>
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex items-center gap-3">
         <div className="mobile-nav xl:hidden">
           {(['dashboard', 'store', 'integration'] as Page[]).map((id, i) => <button key={id} aria-label={id} className={page === id ? 'active' : ''} onClick={() => setPage(id)}><Icon name={i === 0 ? 'home' : i === 1 ? 'store' : 'database'} size={17} /></button>)}
         </div>
         <button className="icon-button hidden sm:grid"><Icon name="search" /></button>
         <button className="icon-button hidden sm:grid"><Icon name="alert" /></button>
-        <div className="avatar sm:hidden">MG</div>
+        {user ? (
+          <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
+            <span className="hidden md:inline text-[11px] font-mono text-slate-300 px-2 py-1 rounded bg-slate-800/80 border border-slate-700/50">
+              {user.rol}
+            </span>
+            <button onClick={onOpenLogin} title="Cambiar usuario o tenant" className="text-xs text-slate-400 hover:text-emerald-400 underline ml-1">
+              Cambiar
+            </button>
+            <button onClick={onLogout} title="Cerrar sesión" className="icon-button text-slate-400 hover:text-red-400 ml-1">
+              <Icon name="logout" size={15} />
+            </button>
+          </div>
+        ) : (
+          <button onClick={onOpenLogin} className="primary-button text-xs py-1.5 px-3">
+            Iniciar sesión
+          </button>
+        )}
       </div>
     </header>
   )
@@ -175,33 +341,32 @@ const chartLabels = [
 const chartYAxis = ['800', '1.2k', '1.6k', '2.0k', '2.4k']
 
 function ForecastChart() {
-  const [discipline, setDiscipline] = useState('Todas')
   return (
-    <div className="panel h-full min-h-[360px] p-5 lg:p-6">
-      <div className="flex flex-col sm:flex-row sm:items-start gap-4 justify-between">
-        <div><h2 className="section-title">Demanda semanal</h2><p className="section-subtitle">Venta histórica vs. pronóstico predictivo</p></div>
-        <div className="tabs">{['Todas', 'Fútbol', 'Running', 'Fitness'].map(x => <button key={x} onClick={() => setDiscipline(x)} className={discipline === x ? 'active' : ''}>{x}</button>)}</div>
+    <div className="panel p-5 lg:p-6 flex flex-col justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="section-title">Proyección de demanda · Running y Fútbol</h2>
+          <p className="section-subtitle mt-0.5">Ventana de 8 semanas vs. capacidad de reposición</p>
+        </div>
+        <div className="flex items-center gap-4 text-xs">
+          <span className="flex items-center gap-2"><span className="legend-dot bg-emerald-400" />Proyección IA</span>
+          <span className="flex items-center gap-2"><span className="legend-dot bg-slate-500" />Histórico</span>
+        </div>
       </div>
-      <div className="flex gap-5 mt-5 text-[11px] text-slate-400">
-        <span className="flex items-center gap-2"><i className="legend-line solid" />Venta histórica real</span>
-        <span className="flex items-center gap-2"><i className="legend-line dashed" />Pronóstico predictivo</span>
-      </div>
-      <div className="mt-4 h-[245px] relative">
-        <svg viewBox="0 0 690 260" preserveAspectRatio="none" className="w-full h-full overflow-visible">
-          <defs>
-            <linearGradient id="forecast" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#10b981" stopOpacity="0.22" /><stop offset="1" stopColor="#10b981" stopOpacity="0" /></linearGradient>
-          </defs>
-          {[25, 80, 135, 190, 245].map(y => <line key={y} x1="45" y1={y} x2="680" y2={y} stroke="#1f2937" strokeWidth="1" />)}
-          <line x1="350" y1="15" x2="350" y2="245" stroke="#334155" strokeDasharray="3 5" />
-          <text x="355" y="22" fill="#64748b" fontSize="10">HOY</text>
-          <path d="M350 140 C390 119,410 128,440 96 S500 78,530 88 S580 50,620 61 S655 34,680 42 L680 245 L350 245Z" fill="url(#forecast)" />
-          <path d="M48 190 C80 177,105 182,135 157 S190 169,225 130 S280 143,315 117 S338 130,350 140" fill="none" stroke="#94a3b8" strokeWidth="2.5" />
-          <path d="M350 140 C390 119,410 128,440 96 S500 78,530 88 S580 50,620 61 S655 34,680 42" fill="none" stroke="#10b981" strokeWidth="3" strokeDasharray="8 7" />
-          {chartLabels.map(item => <text key={item.x} x={item.x} y="258" fill="#64748b" fontSize="10">{item.val}</text>)}
-          {chartYAxis.map((v, i) => <text key={v} x="3" y={249 - i * 55} fill="#64748b" fontSize="10">{v}</text>)}
-          <circle cx="680" cy="42" r="5" fill="#0b0f19" stroke="#10b981" strokeWidth="3" />
+      <div className="mt-6 relative">
+        <svg viewBox="0 0 640 240" className="w-full h-56 stroke-slate-800">
+          {[40, 80, 120, 160, 200].map(y => <line key={y} x1="40" y1={y} x2="620" y2={y} strokeDasharray="3 3" />)}
+          <path d="M 48 180 Q 135 160 225 150 T 400 120 T 490 85 T 580 62" fill="none" stroke="#10b981" strokeWidth="3" />
+          <path d="M 48 185 Q 135 175 225 165 T 400 150 T 490 142 T 580 138" fill="none" stroke="#64748b" strokeWidth="2" strokeDasharray="4 4" />
+          {chartLabels.map(p => <circle key={p.x} cx={p.x} cy="100" r="3" fill="#10b981" />)}
         </svg>
-        <div className="chart-tooltip"><span>Pronóstico sem. 6</span><strong>2.328 u.</strong><small>94% fiabilidad</small></div>
+        <div className="flex justify-between text-[11px] text-slate-500 px-6 mt-2">
+          {chartLabels.map(l => <span key={l.val}>Sem {l.val}</span>)}
+        </div>
+      </div>
+      <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-800/80 text-xs text-slate-400">
+        <span>Confianza algorítmica: <strong className="text-emerald-400 font-semibold">94,2%</strong></span>
+        <span>Modelo: Holt-Winters estacional</span>
       </div>
     </div>
   )
@@ -214,15 +379,11 @@ interface UrgentItem {
   qty: string
   chip: string
   confidence: number
-  level: 'critical' | 'warning'
-}
-
-interface ReplenishmentItem extends UrgentItem {
-  formula: string
+  level: string
 }
 
 const urgent: UrgentItem[] = [
-  { sku: 'RUN-001', name: 'Nike Vaporfly 3', detail: 'Talla 42 · Costanera Center', qty: '+25 u.', chip: '+35% Maratón Stgo.', confidence: 94, level: 'critical' },
+  { sku: 'RUN-001', name: 'Nike Vaporfly 3 (Talla 42)', detail: 'Costanera Center', qty: '+25 u.', chip: '+35% Maratón Santiago', confidence: 94, level: 'critical' },
   { sku: 'RUN-008', name: 'Cortaviento Trail Shield', detail: 'Costanera Center', qty: '+18 u.', chip: 'Pico estacional', confidence: 91, level: 'critical' },
   { sku: 'FUT-023', name: 'Balón Torneo Pro Match N°5', detail: 'Parque Arauco', qty: '+28 u.', chip: 'Torneo Nacional', confidence: 87, level: 'warning' },
 ]
@@ -230,7 +391,7 @@ const urgent: UrgentItem[] = [
 function ReplenishmentList({ liveOrders }: { liveOrders?: DashboardResponse['sugerencias_urgentes'] }) {
   const [approved, setApproved] = useState<string[]>([])
 
-  const items: ReplenishmentItem[] = useMemo(() => {
+  const items = useMemo(() => {
     if (liveOrders && liveOrders.length > 0) {
       return liveOrders.map((o) => ({
         sku: o.sku_codigo,
@@ -239,18 +400,18 @@ function ReplenishmentList({ liveOrders }: { liveOrders?: DashboardResponse['sug
         qty: `+${o.cantidad_sugerida} u.`,
         chip: o.evento_estacional,
         confidence: o.confidence_score,
-        level: (o.formula_desglose.stock_actual <= 3 ? 'critical' : 'warning') as 'critical' | 'warning',
-        formula: `Demanda esperada (${o.formula_desglose.demanda_esperada}) + Seguridad (${o.formula_desglose.stock_seguridad}) − Stock actual (${o.formula_desglose.stock_actual}) = ${o.cantidad_sugerida} unidades`,
+        level: o.formula_desglose.stock_actual <= 3 ? 'critical' : 'warning',
+        formula: `Demanda esperada (${o.formula_desglose.demanda_esperada}) + Seguridad (${o.formula_desglose.stock_seguridad}) - Stock actual (${o.formula_desglose.stock_actual}) = ${o.cantidad_sugerida} unidades`,
       }))
     }
     return urgent.map((u) => ({
       ...u,
-      formula: 'Demanda esperada (28) + Seguridad (5) − Stock actual (8) = 25 unidades',
+      formula: 'Demanda esperada (28) + Seguridad (5) - Stock actual (8) = 25 unidades',
     }))
   }, [liveOrders])
 
   const handleApprove = async (sku: string) => {
-    setApproved((prev: string[]) => [...prev, sku])
+    setApproved((prev) => [...prev, sku])
     await api.approveOrder(sku)
   }
 
@@ -258,28 +419,30 @@ function ReplenishmentList({ liveOrders }: { liveOrders?: DashboardResponse['sug
     <div className="panel h-full min-h-[360px] flex flex-col">
       <div className="p-5 border-b border-slate-800 flex items-start justify-between">
         <div><h2 className="section-title">Reabastecimiento urgente</h2><p className="section-subtitle">Priorizado por riesgo y lead time</p></div>
-        <button className="icon-button small"><Icon name="more" /></button>
+        <button className="icon-button-small"><Icon name="more" /></button>
       </div>
       <div className="divide-y divide-slate-800/80 flex-1">
         {items.map(item => {
           const done = approved.includes(item.sku)
-          return <div key={item.sku} className="p-4 lg:px-5">
-            <div className="flex gap-3">
-              <span className={`risk-bar ${item.level}`} />
-              <div className="min-w-0 flex-1">
-                <div className="flex justify-between gap-3">
-                  <div><p className="text-[13px] font-medium text-slate-100 truncate">{item.name}</p><p className="text-[11px] text-slate-500 mt-0.5">{item.sku} · {item.detail}</p></div>
-                  <div className="text-right shrink-0 group relative"><p className="font-mono text-sm font-semibold text-emerald-400">{item.qty}</p><p className="text-[10px] text-slate-500 underline decoration-dotted cursor-help">Cantidad sugerida</p><div className="formula-tip">{item.formula}</div></div>
+          return (
+            <div key={item.sku} className="p-4 lg:px-5">
+              <div className="flex gap-3">
+                <span className={`risk-bar ${item.level}`} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex justify-between gap-3">
+                    <div><p className="text-[13px] font-medium text-slate-100 truncate">{item.name}</p><p className="text-[11px] text-slate-500 mt-0.5">{item.detail} · <span className="font-mono">{item.sku}</span></p></div>
+                    <div className="text-right shrink-0 group relative"><p className="font-mono text-sm font-semibold text-emerald-400">{item.qty}</p><p className="text-[10px] text-slate-500">{item.confidence}% conf.</p></div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                    <span className="mini-chip">{item.chip}</span>
+                    <button onClick={() => handleApprove(item.sku)} disabled={done} className={`ml-auto text-xs font-medium px-2.5 py-1 rounded-md transition-colors ${done ? 'bg-slate-800 text-slate-500' : 'bg-emerald-400/10 text-emerald-400 hover:bg-emerald-400/20'}`}>
+                      {done ? 'Aprobada' : 'Aprobar orden'}
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 mt-3">
-                  <span className="season-chip"><Icon name="spark" size={11} />{item.chip}</span>
-                  <span className="text-[10px] text-slate-500 ml-auto">{item.confidence}% fiable</span>
-                </div>
-                <div className="confidence"><span style={{ width: `${item.confidence}%` }} /></div>
-                <button disabled={done} onClick={() => handleApprove(item.sku)} className={`approve-button ${done ? 'done' : ''}`}>{done ? <><Icon name="check" size={14} />Pedido aprobado</> : <>Aprobar pedido<Icon name="arrow" size={14} /></>}</button>
               </div>
             </div>
-          </div>
+          )
         })}
       </div>
       <button className="h-11 text-xs font-medium text-slate-400 hover:text-emerald-400 transition-colors border-t border-slate-800">Ver todas las sugerencias →</button>
@@ -287,7 +450,7 @@ function ReplenishmentList({ liveOrders }: { liveOrders?: DashboardResponse['sug
   )
 }
 
-function Dashboard() {
+function Dashboard({ user }: { user?: AuthUser | null }) {
   const [data, setData] = useState<DashboardResponse | null>(null)
 
   useEffect(() => {
@@ -300,7 +463,7 @@ function Dashboard() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [user])
 
   const currentKpis: KpiItem[] = useMemo(() => {
     if (!data) return kpis
@@ -312,11 +475,22 @@ function Dashboard() {
     ]
   }, [data])
 
+  const firstName = user ? user.nombre.split(' ')[0] : 'Matías'
+
   return (
     <main className="page-wrap">
       <div className="flex flex-col lg:flex-row lg:items-end gap-5 justify-between">
-        <div><p className="eyebrow text-emerald-400 mb-2">Lunes, 23 de junio</p><h1 className="page-title">Buenos días, Matías</h1><p className="page-subtitle">Hay {data ? data.kpis.skus_quiebre_critico : '14'} SKUs que requieren tu atención esta mañana.</p></div>
-        <div className="flex flex-wrap gap-2"><SelectPill icon="building">Todas las sucursales (3)</SelectPill><SelectPill>Próximas 4 semanas</SelectPill></div>
+        <div>
+          <p className="eyebrow text-emerald-400 mb-2">Lunes, 23 de junio</p>
+          <h1 className="page-title">Buenos días, {firstName}</h1>
+          <p className="page-subtitle">
+            Cadena: <strong className="text-white">{user ? user.cadena_nombre : 'Marathon Sports Chile'}</strong> · Hay {data ? data.kpis.skus_quiebre_critico : '14'} SKUs que requieren tu atención esta mañana.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <SelectPill icon="building">{user?.sucursal_id ? 'Sucursal Costanera Center' : 'Todas las sucursales (3)'}</SelectPill>
+          <SelectPill>Próximas 4 semanas</SelectPill>
+        </div>
       </div>
       <div className="grid sm:grid-cols-2 2xl:grid-cols-4 gap-3.5 mt-7">{currentKpis.map(item => <KpiCard key={item.title} item={item} />)}</div>
       <div className="grid 2xl:grid-cols-[minmax(0,1.55fr)_minmax(380px,.85fr)] gap-4 mt-4"><ForecastChart /><ReplenishmentList liveOrders={data?.sugerencias_urgentes} /></div>
@@ -330,75 +504,82 @@ function Dashboard() {
 }
 
 interface StoreAlert {
-  level: 'critical' | 'warning'
-  title: string
-  variant: string
-  stock: number
-  min: number
-  eta: string
   sku: string
+  name: string
+  variant: string
+  current: number
+  required: number
+  eta: string
+  status: 'critical' | 'warning'
 }
 
 const storeAlerts: StoreAlert[] = [
-  { level: 'critical', title: 'Nike Vaporfly 3', variant: 'Talla 42 · Running', stock: 3, min: 8, eta: 'Jueves 26', sku: 'RUN-001' },
-  { level: 'critical', title: 'Cortaviento Trail Shield', variant: 'Talla M · Running', stock: 6, min: 12, eta: 'Viernes 27', sku: 'RUN-008' },
-  { level: 'warning', title: 'Balón Torneo Pro Match N°5', variant: 'Fútbol', stock: 12, min: 18, eta: 'Lunes 30', sku: 'FUT-023' },
+  { sku: 'RUN-001', name: 'Nike Vaporfly 3', variant: 'Talla 42 · Running', current: 3, required: 8, eta: 'Jueves 26', status: 'critical' },
+  { sku: 'RUN-008', name: 'Cortaviento Trail Shield', variant: 'Talla M · Running', current: 6, required: 12, eta: 'Viernes 27', status: 'critical' },
+  { sku: 'FUT-023', name: 'Balón Torneo Pro Match N°5', variant: 'Fútbol', current: 12, required: 18, eta: 'Lunes 30', status: 'warning' },
 ]
 
-const storeFeatures: Array<{ icon: IconName; title: string; copy: string }> = [
-  { icon: 'barcode', title: 'Escaneo instantáneo', copy: 'Encuentra cualquier SKU sin digitar códigos.' },
-  { icon: 'alert', title: 'Alertas con contexto', copy: 'Stock, mínimo y fecha de reposición en una vista.' },
-  { icon: 'check', title: 'Cierre operativo', copy: 'Cada conteo queda confirmado para todo el equipo.' },
+const storeFeatures = [
+  { label: 'Cámara móvil activa', desc: 'Lectura continua sin retrasos de enfoque' },
+  { label: 'Sincronización bidireccional', desc: 'El conteo en tienda actualiza el dashboard central' },
+  { label: 'Operación offline', desc: 'Permite conteo en zonas de bodega sin cobertura' },
 ]
 
 function StoreApp() {
-  const [counted, setCounted] = useState<string[]>([])
-  const [query, setQuery] = useState('')
-  const [scan, setScan] = useState(false)
-  const filtered = storeAlerts.filter(x => x.title.toLowerCase().includes(query.toLowerCase()))
+  const [checked, setChecked] = useState<string[]>([])
+  const [alertItems, setAlertItems] = useState<StoreAlert[]>(storeAlerts)
 
-  const handleConfirmCount = async (sku: string) => {
-    setCounted((prev: string[]) => [...prev, sku])
-    await api.recordStoreSale(sku, 0)
+  const toggleCheck = async (sku: string) => {
+    setChecked((prev) => (prev.includes(sku) ? prev.filter(s => s !== sku) : [...prev, sku]))
+    const res = await api.recordStoreSale(sku, 0)
+    if (res.success && res.newStock !== undefined) {
+      setAlertItems(prev => prev.map(item => item.sku === sku ? { ...item, current: res.newStock! } : item))
+    }
   }
+
   return (
-    <main className="page-wrap store-page">
-      <div className="hidden lg:block mb-7"><p className="eyebrow text-emerald-400 mb-2">Vista móvil · operación en piso</p><h1 className="page-title">App de inventario en tienda</h1><p className="page-subtitle">Alertas claras para actuar sin dejar el pasillo.</p></div>
-      <div className="phone-stage">
-        <div className="phone">
-          <div className="phone-status"><span>9:41</span><div className="phone-notch" /><span className="flex items-center gap-1"><i className="signal" /><i className="wifi" /><i className="battery" /></span></div>
-          <div className="phone-header">
-            <div className="flex items-center justify-between"><Logo /><button className="phone-avatar">MG</button></div>
-            <button className="location-select"><Icon name="store" size={15} />Sucursal Costanera Center<Icon name="chevron" size={14} /></button>
-            <div className="mt-5"><p className="text-[20px] font-semibold tracking-tight text-white">Hola, Matías</p><p className="text-xs text-slate-400 mt-1">Turno mañana · 08:00–16:00</p></div>
-          </div>
-          <div className="phone-content">
-            <div className="status-counters">
-              <div><span className="status-dot red" /><b>4</b><small>Críticos</small></div>
-              <div><span className="status-dot amber" /><b>7</b><small>Preventivos</small></div>
-              <div><span className="status-dot green" /><b>142</b><small>Óptimos</small></div>
-            </div>
-            <div className="search-box"><Icon name="search" size={18} /><input value={query} onChange={(e: any) => setQuery(e.target.value)} placeholder="Buscar SKU o producto" /><button onClick={() => setScan(true)}><Icon name="barcode" size={20} /></button></div>
-            <div className="flex items-end justify-between mt-6 mb-3"><div><p className="text-[15px] text-white font-semibold">Prioridad para hoy</p><p className="text-[11px] text-slate-500 mt-0.5">{filtered.length} tareas ordenadas por urgencia</p></div><button className="text-[11px] text-emerald-400 font-medium">Ver todas</button></div>
-            <div className="space-y-3">
-              {filtered.map(item => {
-                const done = counted.includes(item.sku)
-                return <div className="alert-card" key={item.sku}>
-                  <div className="flex items-center justify-between"><span className={`status-badge ${item.level}`}>{item.level === 'critical' ? 'Quiebre inminente' : 'Preventivo'}</span><span className="text-[10px] text-slate-500 font-mono">{item.sku}</span></div>
-                  <p className="text-[14px] text-slate-100 font-semibold mt-3">{item.title}</p><p className="text-[11px] text-slate-500 mt-0.5">{item.variant}</p>
-                  <div className="stock-row"><div><small>Stock actual</small><b className={item.level === 'critical' ? 'text-red-400' : 'text-amber-400'}>{item.stock} u.</b></div><i /><div><small>Mínimo requerido</small><b>{item.min} u.</b></div></div>
-                  <div className="arrival"><Icon name="box" size={14} /><span>Reposición estimada</span><b>{item.eta}</b></div>
-                  <button disabled={done} onClick={() => handleConfirmCount(item.sku)} className={`rack-button ${done ? 'done' : ''}`}>{done ? <><Icon name="check" size={15} />Conteo confirmado</> : 'Confirmar conteo en rack'}</button>
-                </div>
+    <main className="page-wrap">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
+        <div><p className="eyebrow text-emerald-400 mb-2">Módulo de piso de venta</p><h1 className="page-title">SportStock Móvil — Modo Tienda</h1><p className="page-subtitle">Herramienta para encargados de inventario en sucursales físicas.</p></div>
+        <div className="store-badge"><span className="store-indicator" />Sucursal Costanera Center</div>
+      </div>
+      <div className="grid lg:grid-cols-2 gap-4 mt-8">
+        <div className="panel p-5 lg:p-6 min-h-[380px] flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-1"><span className="status-badge critical">4 alertas</span><span className="status-badge warning">7 preventivos</span></div>
+            <h2 className="section-title mt-3">Semáforo de reposición de sala</h2>
+            <p className="section-subtitle mt-1">SKUs prioritarios que deben ser reabastecidos desde bodega antes de las 14:00.</p>
+            <div className="divide-y divide-slate-800/80 mt-5">
+              {alertItems.map(item => {
+                const isDone = checked.includes(item.sku)
+                return (
+                  <div key={item.sku} className="py-3 flex items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2"><p className="text-xs font-semibold text-slate-100">{item.name}</p><span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${item.status === 'critical' ? 'bg-red-500/10 text-red-400' : 'bg-amber-500/10 text-amber-400'}`}>{item.sku}</span></div>
+                      <p className="text-[11px] text-slate-400 mt-0.5">{item.variant} · Stock actual: <strong className="text-slate-200">{item.current} u.</strong> (mín. {item.required} u.)</p>
+                    </div>
+                    <button onClick={() => toggleCheck(item.sku)} className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors shrink-0 ${isDone ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400' : 'border-slate-700 hover:border-slate-600 text-slate-300'}`}>
+                      {isDone ? 'Confirmado' : 'Confirmar en rack'}
+                    </button>
+                  </div>
+                )
               })}
             </div>
           </div>
-          <div className="phone-nav"><button className="active"><Icon name="home" /><span>Inicio</span></button><button><Icon name="search" /><span>Buscar</span></button><button className="scan-main" onClick={() => setScan(true)}><Icon name="barcode" size={24} /></button><button><Icon name="box" /><span>Stock</span></button><button><Icon name="user" /><span>Perfil</span></button></div>
-          {scan && <div className="scanner-overlay" onClick={() => setScan(false)}><button className="close-scan">Cerrar</button><div className="scan-frame"><span /><span /><span /><span /><i /></div><p>Centra el código de barras dentro del marco</p><small>Toca en cualquier lugar para cerrar</small></div>}
+          <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-3 text-xs text-slate-400 mt-4"><Icon name="barcode" size={20} className="text-emerald-400 shrink-0" /><span>Usa la app en tu teléfono para escanear el código de barras del producto y registrar el conteo en tiempo real.</span></div>
         </div>
-        <div className="hidden lg:block max-w-[370px]">
-          <span className="eyebrow text-emerald-400">Diseñado para el piso</span><h2 className="text-3xl font-semibold tracking-[-.04em] text-white mt-4 leading-tight">Menos menús.<br />Más acciones resueltas.</h2><p className="text-sm text-slate-400 leading-6 mt-5">La app ordena las tareas por impacto, confirma stock físico y mantiene al equipo alineado con el pronóstico central.</p>
-          <div className="mt-8 space-y-5">{storeFeatures.map(f => <div key={f.title} className="flex gap-4"><div className="feature-icon"><Icon name={f.icon} /></div><div><p className="text-sm font-medium text-slate-100">{f.title}</p><p className="text-xs text-slate-500 mt-1 leading-5">{f.copy}</p></div></div>)}</div>
+        <div className="panel p-5 lg:p-6 min-h-[380px] flex flex-col justify-between">
+          <div>
+            <h2 className="section-title">Lector de código de barras físico</h2>
+            <p className="section-subtitle mt-1">Compatible con cámaras de smartphones y pistolas láser industriales Honeywell / Zebra.</p>
+            <div className="scanner-frame mt-6">
+              <div className="scanner-line" />
+              <div className="text-center"><Icon name="barcode" size={48} className="text-slate-600 mx-auto mb-2" /><p className="text-xs font-mono text-slate-400">ESCANEAR EAN-13 / CODE-128</p><p className="text-[11px] text-slate-600 mt-1">Apunta la cámara al código de la caja o etiqueta</p></div>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 pt-4 border-t border-slate-800/80 text-center">
+            {storeFeatures.map(f => <div key={f.label}><p className="text-xs font-semibold text-slate-200">{f.label}</p><p className="text-[10px] text-slate-500 mt-0.5">{f.desc}</p></div>)}
+          </div>
         </div>
       </div>
     </main>
@@ -415,8 +596,8 @@ interface AuditRow {
 }
 
 const auditRows: AuditRow[] = [
-  { id: 'LT-2025-0623-04', date: '23 Jun, 08:30', source: 'SAP Business One', records: '12.458', status: 'Validado', tone: 'success' },
-  { id: 'LT-2025-0622-03', date: '22 Jun, 18:12', source: 'stock_semanal.xlsx', records: '4.862', status: 'Validado con alertas', tone: 'warning' },
+  { id: 'LT-2025-0623-01', date: 'Hoy, 08:30', source: 'SAP Business One', records: '12.458', status: 'Validado', tone: 'success' },
+  { id: 'LT-2025-0622-03', date: '22 Jun, 19:15', source: 'Carga manual Excel', records: '340', status: 'Validado', tone: 'success' },
   { id: 'LT-2025-0622-02', date: '22 Jun, 08:30', source: 'SAP Business One', records: '12.391', status: 'Validado', tone: 'success' },
   { id: 'LT-2025-0621-01', date: '21 Jun, 08:30', source: 'SAP Business One', records: '12.404', status: 'Validado', tone: 'success' },
 ]
@@ -503,6 +684,48 @@ function Integration() {
 
 export default function App() {
   const [page, setPage] = useState<Page>('dashboard')
-  const content = useMemo(() => page === 'dashboard' ? <Dashboard /> : page === 'store' ? <StoreApp /> : <Integration />, [page])
-  return <div className="min-h-screen bg-[#0b0f19] text-slate-100 flex"><Sidebar page={page} setPage={setPage} /><div className="min-w-0 flex-1"><Topbar page={page} setPage={setPage} />{content}</div></div>
+  const [user, setUser] = useState<AuthUser | null>(() => api.getStoredUser())
+  const [loginOpen, setLoginOpen] = useState(false)
+
+  const handleLogout = () => {
+    api.logout()
+    setUser(null)
+  }
+
+  const handleLoginSuccess = (newUser: AuthUser) => {
+    setUser(newUser)
+  }
+
+  const content = useMemo(() => {
+    if (page === 'dashboard') return <Dashboard user={user} />
+    if (page === 'store') return <StoreApp />
+    return <Integration />
+  }, [page, user])
+
+  return (
+    <div className="min-h-screen bg-[#0b0f19] text-slate-100 flex">
+      <Sidebar
+        page={page}
+        setPage={setPage}
+        user={user}
+        onOpenLogin={() => setLoginOpen(true)}
+        onLogout={handleLogout}
+      />
+      <div className="min-w-0 flex-1">
+        <Topbar
+          page={page}
+          setPage={setPage}
+          user={user}
+          onOpenLogin={() => setLoginOpen(true)}
+          onLogout={handleLogout}
+        />
+        {content}
+      </div>
+      <LoginModal
+        isOpen={loginOpen}
+        onClose={() => setLoginOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
+    </div>
+  )
 }

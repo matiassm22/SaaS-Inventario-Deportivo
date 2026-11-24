@@ -2,6 +2,22 @@ import { z } from 'zod';
 
 export type Disciplina = 'FUTBOL' | 'RUNNING' | 'FITNESS' | 'TRAIL' | 'OUTDOOR' | 'OTRO';
 export type EstadoOrden = 'PENDIENTE' | 'APROBADA' | 'RECHAZADA' | 'EN_TRANSITO' | 'RECIBIDA';
+export type UserRole = 'GERENTE_OPERACIONES' | 'JEFE_TIENDA' | 'AUDITOR';
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  nombre: string;
+  rol: UserRole;
+  cadena_id: string;
+  cadena_nombre: string;
+  sucursal_id?: string;
+}
+
+export const LoginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+});
 
 // 1. Esquema de Ingesta por Fila (CSV o JSON)
 export const IngestionRowSchema = z.object({

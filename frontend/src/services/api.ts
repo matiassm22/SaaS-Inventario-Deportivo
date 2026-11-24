@@ -1,5 +1,17 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
 
+export type UserRole = 'GERENTE_OPERACIONES' | 'JEFE_TIENDA' | 'AUDITOR';
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  nombre: string;
+  rol: UserRole;
+  cadena_id: string;
+  cadena_nombre: string;
+  sucursal_id?: string;
+}
+
 export interface DashboardResponse {
   kpis: {
     skus_quiebre_critico: number;
@@ -31,16 +43,71 @@ export interface DashboardResponse {
   };
 }
 
+let currentToken: string | null = typeof window !== 'undefined' ? localStorage.getItem('sportstock_auth_token') : null;
+
+function getHeaders(customHeaders: Record<string, string> = {}): Record<string, string> {
+  const headers: Record<string, string> = { ...customHeaders };
+  if (currentToken) {
+    headers['Authorization'] = `Bearer ${currentToken}`;
+  }
+  return headers;
+}
+
 export const api = {
+  // Manejo de sesión y tokens
+  getStoredUser(): AuthUser | null {
+    try {
+      const raw = localStorage.getItem('sportstock_auth_user');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  },
+
+  setSession(token: string | null, user: AuthUser | null) {
+    currentToken = token;
+    if (token && user) {
+      localStorage.setItem('sportstock_auth_token', token);
+      localStorage.setItem('sportstock_auth_user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('sportstock_auth_token');
+      localStorage.removeItem('sportstock_auth_user');
+    }
+  },
+
+  async login(email: string, password: string): Promise<{ success: boolean; user?: AuthUser; token?: string; error?: string }> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success && data.token && data.user) {
+        this.setSession(data.token, data.user);
+        return { success: true, user: data.user, token: data.token };
+      }
+      return { success: false, error: data.detail || data.error || 'Credenciales inválidas' };
+    } catch {
+      return { success: false, error: 'No fue posible conectar con el servidor de autenticación.' };
+    }
+  },
+
+  logout() {
+    this.setSession(null, null);
+  },
+
   // 1. Obtener KPIs y sugerencias en vivo
   async getDashboardSummary(): Promise<DashboardResponse | null> {
     try {
-      const res = await fetch(`${API_BASE_URL}/dashboard/resumen`);
+      const res = await fetch(`${API_BASE_URL}/dashboard/resumen`, {
+        headers: getHeaders(),
+      });
       if (!res.ok) throw new Error('API offline');
       const json = await res.json();
       return json.data;
     } catch {
-      // Fallback a modo offline/demo
       return null;
     }
   },
@@ -50,7 +117,7 @@ export const api = {
     try {
       const res = await fetch(`${API_BASE_URL}/ordenes/${orderId}/estado`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           estado: 'APROBADA',
           cantidad_aprobada: cantidadAprobada,
@@ -70,6 +137,7 @@ export const api = {
 
       const res = await fetch(`${API_BASE_URL}/ingesta/lote`, {
         method: 'POST',
+        headers: getHeaders(),
         body: formData,
       });
 
@@ -88,7 +156,7 @@ export const api = {
     try {
       const res = await fetch(`${API_BASE_URL}/tienda/venta`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ sku_codigo: skuCodigo, unidades }),
       });
       const json = await res.json();
@@ -104,7 +172,9 @@ export const api = {
   // 5. Consultar auditoría de lotes
   async getAuditLogs(): Promise<any[] | null> {
     try {
-      const res = await fetch(`${API_BASE_URL}/integraciones/auditoria`);
+      const res = await fetch(`${API_BASE_URL}/integraciones/auditoria`, {
+        headers: getHeaders(),
+      });
       if (!res.ok) return null;
       const json = await res.json();
       return json.data;

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { ApiController } from '../controllers/api.controller.js';
+import { requireAuth, optionalAuth, requireRole } from '../middlewares/auth.middleware.js';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -9,10 +10,18 @@ const upload = multer({
 
 export const apiRouter = Router();
 
-// Rutas de API v1
-apiRouter.get('/dashboard/resumen', ApiController.getDashboardSummary);
-apiRouter.patch('/ordenes/:id/estado', ApiController.updateOrderStatus);
-apiRouter.post('/ingesta/lote', upload.single('archivo'), ApiController.ingestBatch);
-apiRouter.get('/tienda/inventario', ApiController.getStoreInventory);
-apiRouter.post('/tienda/venta', ApiController.recordStoreSale);
-apiRouter.get('/integraciones/auditoria', ApiController.getAuditLogs);
+// 1. Autenticación y Perfil
+apiRouter.post('/auth/login', ApiController.login);
+apiRouter.get('/auth/me', requireAuth, ApiController.getProfile);
+
+// 2. Operaciones de Negocio & Dashboard
+apiRouter.get('/dashboard/resumen', optionalAuth, ApiController.getDashboardSummary);
+apiRouter.patch('/ordenes/:id/estado', requireAuth, requireRole(['GERENTE_OPERACIONES']), ApiController.updateOrderStatus);
+
+// 3. Ingesta de Lotes & Auditoría
+apiRouter.post('/ingesta/lote', requireAuth, requireRole(['GERENTE_OPERACIONES', 'AUDITOR']), upload.single('archivo'), ApiController.ingestBatch);
+apiRouter.get('/integraciones/auditoria', requireAuth, ApiController.getAuditLogs);
+
+// 4. Operaciones de Tienda Física (Mobile / POS)
+apiRouter.get('/tienda/inventario', optionalAuth, ApiController.getStoreInventory);
+apiRouter.post('/tienda/venta', optionalAuth, ApiController.recordStoreSale);

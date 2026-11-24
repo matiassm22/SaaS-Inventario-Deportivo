@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import { db } from '../services/db.service.js';
 import { ForecastingService } from '../services/forecasting.service.js';
 import { ingestionService } from '../services/ingestion.service.js';
-import { OrderStatusUpdateSchema, StoreSaleSchema } from '../types/index.js';
+import { OrderStatusUpdateSchema, StoreSaleSchema, LoginSchema } from '../types/index.js';
+import { KNOWN_USERS, generateToken, AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 
 const forecasting = new ForecastingService();
 
@@ -172,5 +173,52 @@ export class ApiController {
     } catch (err: any) {
       return res.status(500).json({ success: false, error: err.message });
     }
+  }
+
+  // 7. POST /api/v1/auth/login
+  public static async login(req: Request, res: Response) {
+    try {
+      const validation = LoginSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({
+          type: 'https://api.sportstock.ai/errors/bad-request',
+          title: 'Credenciales Inválidas',
+          status: 400,
+          detail: 'Debe ingresar un email válido y una contraseña de al menos 6 caracteres.',
+          instance: req.originalUrl,
+        });
+      }
+
+      const { email, password } = validation.data;
+      const user = KNOWN_USERS[email.toLowerCase()];
+
+      if (!user || password !== 'Password123!') {
+        return res.status(401).json({
+          type: 'https://api.sportstock.ai/errors/unauthorized',
+          title: 'Autenticación Fallida',
+          status: 401,
+          detail: 'El correo electrónico o la contraseña ingresada son incorrectos.',
+          instance: req.originalUrl,
+        });
+      }
+
+      const token = generateToken(user);
+      return res.json({
+        success: true,
+        token,
+        user,
+        mensaje: `Bienvenido(a), ${user.nombre}. Sesión iniciada como ${user.rol}.`,
+      });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
+  // 8. GET /api/v1/auth/me
+  public static async getProfile(req: AuthenticatedRequest, res: Response) {
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: 'No autenticado' });
+    }
+    return res.json({ success: true, user: req.user });
   }
 }
