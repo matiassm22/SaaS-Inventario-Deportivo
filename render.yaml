@@ -22,14 +22,13 @@ services:
       - key: SUPABASE_ANON_KEY
         value: sb_publishable_NI1El8WunistYs9lqNNXIg_pulR6Gi6
       - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
+        value: sb_publishable_NI1El8WunistYs9lqNNXIg_pulR6Gi6
 
   # 2. Frontend Dashboard en Render (Sitio Estático)
   - type: web
     name: sportstock-frontend
     env: static
     rootDir: frontend
-    plan: free
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
     routes:
