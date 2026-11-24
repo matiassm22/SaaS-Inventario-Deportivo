@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Base de Datos Relacional PostgreSQL 15 con inicialización automática
+  # 1. Base de Datos Relacional PostgreSQL 15 con inicialización automática
   postgres:
     image: postgres:15-alpine
     container_name: sportstock-postgres
@@ -14,12 +14,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # Las migraciones y seed se ejecutan automáticamente al primer arranque
       - ./supabase/migrations/20261122000001_create_schema.sql:/docker-entrypoint-initdb.d/01_create_schema.sql:ro
       - ./supabase/migrations/20261122000002_rls_and_security.sql:/docker-entrypoint-initdb.d/02_rls_and_security.sql:ro
       - ./supabase/migrations/20261122000003_seed_data.sql:/docker-entrypoint-initdb.d/03_seed_data.sql:ro
 
-  # Cola de Tareas Asíncronas Redis
+  # 2. Cola de Tareas Asíncronas Redis
   redis:
     image: redis:7-alpine
     container_name: sportstock-redis
@@ -28,6 +27,35 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+
+  # 3. Backend API REST (Node.js + TypeScript)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sportstock-backend
+    restart: always
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      DEFAULT_CADENA_ID: 11111111-1111-1111-1111-111111111111
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+
+  # 4. Frontend Dashboard (React 19 + Vite + Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sportstock-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
