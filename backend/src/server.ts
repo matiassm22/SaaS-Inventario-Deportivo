@@ -10,7 +10,18 @@ app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Health Check
+// Health Check y Ruta Raíz Informativa
+app.get('/', (req: express.Request, res: express.Response) => {
+  res.json({
+    service: 'SportStockAI API REST',
+    status: 'ONLINE',
+    version: '1.0.0',
+    documentation: '/api/v1/dashboard/resumen',
+    health: '/health',
+    environment: config.nodeEnv,
+  });
+});
+
 app.get('/health', (req: express.Request, res: express.Response) => {
   res.json({
     status: 'ONLINE',
