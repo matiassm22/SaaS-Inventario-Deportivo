@@ -1,4 +1,10 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+const formattedBaseUrl = rawBaseUrl.startsWith('http://') || rawBaseUrl.startsWith('https://')
+  ? rawBaseUrl
+  : `https://${rawBaseUrl}`;
+const API_BASE_URL = formattedBaseUrl.replace(/\/+$/, '').endsWith('/api/v1')
+  ? formattedBaseUrl.replace(/\/+$/, '')
+  : `${formattedBaseUrl.replace(/\/+$/, '')}/api/v1`;
 
 export type UserRole = 'GERENTE_OPERACIONES' | 'JEFE_TIENDA' | 'AUDITOR';
 

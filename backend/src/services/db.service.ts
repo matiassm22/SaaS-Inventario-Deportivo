@@ -169,13 +169,14 @@ export class DatabaseService {
   };
 
   constructor() {
-    if (config.supabase.url && config.supabase.serviceRoleKey) {
+    const key = config.supabase.serviceRoleKey || config.supabase.anonKey;
+    if (config.supabase.url && key) {
       try {
-        this.supabase = createClient(config.supabase.url, config.supabase.serviceRoleKey);
+        this.supabase = createClient(config.supabase.url, key);
         this.isConnectedToSupabase = true;
         console.log('[Database] Conectado exitosamente a Supabase PostgreSQL Cloud.');
       } catch (err) {
-        console.warn('[Database] Falló conexión a Supabase, activando almacenamiento local reactivo:', err);
+        console.warn('[Database] Fallo conexión a Supabase, activando almacenamiento local reactivo:', err);
       }
     } else {
       console.log('[Database] Sin credenciales Supabase. Operando con Seed reactivo en memoria.');
