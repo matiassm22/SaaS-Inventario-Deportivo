@@ -20,6 +20,7 @@ apiRouter.patch('/ordenes/:id/estado', requireAuth, requireRole(['GERENTE_OPERAC
 
 // 3. Ingesta de Lotes & Auditoría
 apiRouter.post('/ingesta/lote', requireAuth, requireRole(['GERENTE_OPERACIONES', 'AUDITOR']), upload.single('archivo'), ApiController.ingestBatch);
+apiRouter.get('/trabajos/:id/estado', requireAuth, ApiController.getJobStatus);
 apiRouter.get('/integraciones/auditoria', requireAuth, ApiController.getAuditLogs);
 
 // 4. Operaciones de Tienda Física (Mobile / POS)

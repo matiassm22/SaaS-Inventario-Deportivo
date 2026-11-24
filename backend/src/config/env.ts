@@ -5,6 +5,10 @@ export const config = {
   port: parseInt(process.env.PORT || '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
   jwtSecret: process.env.JWT_SECRET || 'sportstock-b2b-jwt-auth-secret-key-2026',
+  redis: {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379', 10),
+  },
   supabase: {
     url: process.env.SUPABASE_URL || '',
     anonKey: process.env.SUPABASE_ANON_KEY || '',

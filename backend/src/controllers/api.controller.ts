@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { db } from '../services/db.service.js';
 import { ForecastingService } from '../services/forecasting.service.js';
 import { ingestionService } from '../services/ingestion.service.js';
+import { queueService } from '../services/queue.service.js';
 import { OrderStatusUpdateSchema, StoreSaleSchema, LoginSchema } from '../types/index.js';
 import { KNOWN_USERS, generateToken, AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 
@@ -108,6 +109,24 @@ export class ApiController {
         return res.status(400).json({
           success: false,
           error: 'Debe adjuntar un archivo CSV multipart o enviar un array JSON en el body.',
+        });
+      }
+
+      // Si el lote supera los 50 registros, se delega a la cola asíncrona (Regla 2)
+      if (result.validRows.length > 50) {
+        const job = await queueService.enqueueIngestionJob(result.lotCode, result.source, result.validRows);
+        return res.status(202).json({
+          success: true,
+          status: 'ACCEPTED',
+          mensaje: 'Lote masivo encolado exitosamente para procesamiento asíncrono.',
+          data: {
+            job_id: job.id,
+            estado: job.estado,
+            registros_totales: result.totalRecords,
+            registros_procesados: result.validRecords,
+            registros_con_error: result.failedRecords,
+            errores: result.errors,
+          },
         });
       }
 
@@ -220,5 +239,21 @@ export class ApiController {
       return res.status(401).json({ success: false, error: 'No autenticado' });
     }
     return res.json({ success: true, user: req.user });
+  }
+
+  // 9. GET /api/v1/trabajos/:id/estado
+  public static async getJobStatus(req: Request, res: Response) {
+    const { id } = req.params;
+    const job = queueService.getJob(id);
+    if (!job) {
+      return res.status(404).json({
+        type: 'https://api.sportstock.ai/errors/not-found',
+        title: 'Trabajo No Encontrado',
+        status: 404,
+        detail: `No se encontró el trabajo de procesamiento con ID ${id}.`,
+        instance: req.originalUrl,
+      });
+    }
+    return res.json({ success: true, data: job });
   }
 }
