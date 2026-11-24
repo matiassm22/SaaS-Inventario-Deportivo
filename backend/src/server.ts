@@ -36,8 +36,9 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 // Iniciar servidor
-app.listen(config.port, () => {
-  console.log(`[INFO] Servidor SportStock API activo en puerto ${config.port}`);
-  console.log(`[INFO] URL base: http://localhost:${config.port}/api/v1`);
-  console.log(`[INFO] Health check: http://localhost:${config.port}/health`);
+const host = '0.0.0.0';
+app.listen(config.port, host, () => {
+  console.log(`[INFO] Servidor SportStock API activo en http://${host}:${config.port}`);
+  console.log(`[INFO] URL base: http://${host}:${config.port}/api/v1`);
+  console.log(`[INFO] Health check: http://${host}:${config.port}/health`);
 });
